@@ -1,1 +1,1 @@
-# file to enamble scripts as a package
+# file to enable scripts as a package
