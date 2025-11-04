@@ -3,7 +3,7 @@ import pandas as pd
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
-def detect(hs, dir, tp, time, ts_hs, ts_dur):
+def detect(hs:np.array, dir, tp, time, ts_hs, ts_dur) -> pd.DataFrame:
     '''
     Detect storms from a time series of wave with Peak Over Threshold approach
     :param hs: np.array, series of significant wave heights in meters
@@ -40,24 +40,36 @@ def detect(hs, dir, tp, time, ts_hs, ts_dur):
 
     # Collect storm statistics
     storms = []
+    prev_end_time = None
+
     for i, peak in enumerate(peak_indices):
         start_idx = max(0, peak - storm_nr[i])
-        end_idx = peak + 1
+        end_idx = peak
 
-        storms.append({
+        storm = {
             'start': time[start_idx],
             'end': time[end_idx-1],
-            'duration': (time[end_idx-1] - time[start_idx]) * 24,  # in hours
+            'duration': (time[end_idx-1] - time[start_idx]) * 24,  # hours, if time is in days
             'time': time[start_idx:end_idx],
-            # # enable only if needed to save memory
+            # enable only if needed to save memory
             # 'hs': hs[start_idx:end_idx],
             # 'dir': dir[start_idx:end_idx],
             # 'tp': tp[start_idx:end_idx],
-            # # end enable only if needed to save memory
-            'hs_max': np.max(hs[start_idx:end_idx]),
-            'dir_mean': np.mean(dir[start_idx:end_idx]),
-            'tp_mean': np.mean(tp[start_idx:end_idx])
-        })
+            'hs_max': float(np.max(hs[start_idx:end_idx])),
+            'dir_mean': float(np.mean(dir[start_idx:end_idx])),
+            'tp_mean': float(np.mean(tp[start_idx:end_idx])),
+        }
+
+        if prev_end_time is None: 
+            storm['gap'] = 0
+            storm['season'] = 0
+        else: 
+            calm_gap = (time[start_idx] - prev_end_time) # in days
+            storm['gap'] = calm_gap
+            storm['season'] = 1 if calm_gap >= 150 else 0  # start of new season if gap >= 150 days
+
+        storms.append(storm)
+        prev_end_time = time[end_idx-1]
 
     return pd.DataFrame(storms)
 
