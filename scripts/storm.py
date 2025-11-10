@@ -1,9 +1,10 @@
 import numpy as np
 import pandas as pd
 import scipy.signal as signal
-import matplotlib.pyplot as plt
 
-def detect(hs:np.array, dir, tp, time, ts_hs, ts_dur) -> pd.DataFrame:
+from scipy import stats
+
+def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array, ts_dur:np.array) -> pd.DataFrame:
     '''
     Detect storms from a time series of wave with Peak Over Threshold approach
     :param hs: np.array, series of significant wave heights in meters
@@ -36,42 +37,76 @@ def detect(hs:np.array, dir, tp, time, ts_hs, ts_dur) -> pd.DataFrame:
 
     # count number of Hs on each storm cluster 
     storm_nr = (storm_dur_cum[peak_indices] / delta_t).astype(int)
-    start_indices = peak_indices - storm_nr
 
     # Collect storm statistics
-    storms = []
-    prev_end_time = None
+    start_idx = peak_indices - storm_nr
+    end_idx = peak_indices
 
-    for i, peak in enumerate(peak_indices):
-        start_idx = max(0, peak - storm_nr[i])
-        end_idx = peak
+    # calculate the duration from the end of the last storm to the start of this storm 
+    end_prev = np.concat(([start_idx[0]], peak_indices[:-1]))   # first storm has no previous storm
 
-        storm = {
-            'start': time[start_idx],
-            'end': time[end_idx-1],
-            'duration': (time[end_idx-1] - time[start_idx]) * 24,  # hours, if time is in days
-            'time': time[start_idx:end_idx],
-            # enable only if needed to save memory
-            # 'hs': hs[start_idx:end_idx],
-            # 'dir': dir[start_idx:end_idx],
-            # 'tp': tp[start_idx:end_idx],
-            'hs_max': float(np.max(hs[start_idx:end_idx])),
-            'dir_mean': float(np.mean(dir[start_idx:end_idx])),
-            'tp_mean': float(np.mean(tp[start_idx:end_idx])),
-        }
+    storms = {
+        "start": time[start_idx],
+        "end": time[peak_indices],
+        "duration": storm_nr*delta_t,
+        "time": [time[start:end] for start, end in zip(start_idx, end_idx+1)],
+        "hs": [hs[start:end] for start, end in zip(start_idx, end_idx+1)],
+        "tp": [tp[start:end] for start, end in zip(start_idx, end_idx+1)],
+        "dir": [dir[start:end] for start, end in zip(start_idx, end_idx+1)],
+        "hs_max": [np.max(hs[start:end]) for start, end in zip(start_idx, end_idx+1)],
+        "dir_mean": [np.mean(dir[start:end]) for start, end in zip(start_idx, end_idx+1)],
+        "tp_mean": [np.mean(tp[start:end]) for start, end in zip(start_idx, end_idx+1)],
+        "gap": [time[start] - time[prev] for start, prev in zip(start_idx, end_prev)]
+    }
 
-        if prev_end_time is None: 
-            storm['gap'] = 0
-            storm['season'] = 0
-        else: 
-            calm_gap = (time[start_idx] - prev_end_time) # in days
-            storm['gap'] = calm_gap
-            storm['season'] = 1 if calm_gap >= 150 else 0  # start of new season if gap >= 150 days
+    storms_df = pd.DataFrame(storms)
 
-        storms.append(storm)
-        prev_end_time = time[end_idx-1]
+    storms_df["season"] = np.where(np.array(storms["gap"]) > 150, 1, 0)
 
-    return pd.DataFrame(storms)
+    return storms_df
+
+
+def fit_gap_monsoon(storms:pd.DataFrame) -> list: 
+    '''
+    Fit storm gaps to a probability distribution
+    :param storms: dataframe of detected storms with gap and season information
+    :return: list of fitted distribution of gap, years and season
+    '''
+
+    # fit gap to empirical distribution
+    gap_data = storms['gap'].values
+    gap_data = gap_data[gap_data < 150]  # only consider gaps within a season 
+    gap_res = stats.ecdf(gap_data)
+
+    # calculate gap between storm season 
+    gk = np.array(storms.season)
+    tt = np.zeros(len(gk))
+
+    # record the start and end of every storm season 
+    for i in range(len(gk)):
+        if gk[i] == 1:
+            tt[i] = storms["start"][i]
+            tt[i-1] = storms["end"][i-1]
+
+    t2 = tt[tt != 0]
+
+    # calculate the duration between consecutive calm and storm season
+    gap2 = np.concat(([0], np.diff(t2)))
+
+    calm_season = gap2[1::2]
+    storm_season = gap2[2::2]
+
+    # check if we have pair of calm and storm season 
+    if len(calm_season) != len(storm_season):
+        calm_season = calm_season[:int(len(t2)/2-1)]
+
+    year = calm_season + storm_season
+
+    # MLE fit to poisson distribution 
+    lambdaYear = np.mean(year)
+    lambdaSts = np.mean(storm_season)
+
+    return [gap_res, lambdaYear, lambdaSts]
 
 
 if __name__ == "__main__": # this only runs when this script is executed directly
