@@ -3,6 +3,7 @@ import pandas as pd
 import scipy.signal as signal
 
 from scipy import stats
+from copulas.bivariate import Clayton
 
 def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array, ts_dur:np.array) -> pd.DataFrame:
     '''
@@ -74,9 +75,7 @@ def fit_gap_monsoon(storms:pd.DataFrame) -> list:
     '''
 
     # fit gap to empirical distribution
-    gap_data = storms['gap'].values
-    gap_data = gap_data[gap_data < 150]  # only consider gaps within a season 
-    gap_res = stats.ecdf(gap_data)
+    gap_ecdf = empirical_cdf(storms.gap[storms.gap < 150]) # only consider gaps within a season 
 
     # calculate gap between storm season 
     gk = np.array(storms.season)
@@ -106,8 +105,50 @@ def fit_gap_monsoon(storms:pd.DataFrame) -> list:
     lambdaYear = np.mean(year)
     lambdaSts = np.mean(storm_season)
 
-    return [gap_res, lambdaYear, lambdaSts]
+    return [gap_ecdf, lambdaYear, lambdaSts]
 
+
+def fit_gev(x: pd.Series) -> list: 
+    '''
+    Fit storm variable into gev distribution 
+    :return : list of [shape, location, scale] parameter of fitted GEV distribution'''
+
+    x = x.values 
+    return stats.genextreme.fit(x, loc=np.mean(x)) # optimise with the first guess of location being the mean of the data
+    
+
+def gev_cdf(x: pd.Series, pgev: list) -> np.array:
+    '''
+    return to cdf of gev based on given parameter 
+    x: variable of interest 
+    pgev: list of [shape, location, scale] parameter of fitted GEV
+    return: np.array of the corresponding cdf of x
+    '''
+    x = x.values 
+    return stats.genextreme.cdf(x, pgev[0], loc=pgev[1], scale=pgev[2])
+
+def fit_copulas_clayton(x: pd.Series, y: pd.Series, pgev_x: list, pgev_y:list): 
+    '''
+    Fit two variable into bivariate joint distribution coupla clayton
+    x, y: series of variable 
+
+    '''
+
+    x_cdf = gev_cdf(x, pgev_x)
+    y_cdf = gev_cdf(y, pgev_y)
+
+    clayton_copula = Clayton()
+    clayton_copula.fit(np.column_stack((x_cdf, y_cdf)))
+
+    return clayton_copula
+
+def empirical_cdf(x: pd.Series) -> list: 
+    '''
+    function return to sorted x and the corresponding empirical cummulative distribution function 
+    :return : list of [sorted x, corresponding CDF]
+    '''
+    x = np.sort(x.values)
+    return [x, np.arange(1, len(x) + 1) / len(x)]
 
 if __name__ == "__main__": # this only runs when this script is executed directly
     # test out the function using data from data/wave_srilanka.csv
