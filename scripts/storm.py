@@ -67,6 +67,53 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     return storms_df
 
 
+def generate(storms: pd.DataFrame, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
+    '''
+    generate storm based on fitting 
+    '''
+    # get gev param for hs and dur 
+    pgev_hs = fit_gev(storms.hs_max)
+    pgev_dur = fit_gev(storms.duration)
+
+    # fit copula clayton 
+    clayton_copula = fit_copulas_clayton(storms.hs_max, storms.duration, pgev_hs, pgev_dur)
+
+    # fit direction to empirical cdf 
+    ecdf_dir = empirical_cdf(storms.dir_mean)
+
+    # linear fit of wave peak 
+    p_tp = np.polyfit(storms.hs_max, storms.tp_mean, 1)
+
+    # sampling
+    # sampling_size = int(sampling_size * (1+oversample))
+    sampling_size = int(100*1.1)
+
+    # sample Hs and Duration 
+    [sample_hs, sample_dur] = sample_copula_clayton(clayton_copula, pgev_hs, pgev_dur, sampling_size)
+
+    # sample dir from empirical cdf 
+    sample_dir = sample_ecdf(ecdf_dir, sampling_size)
+
+    # sample tp from linear fit 
+    sample_t = f_linear(p_tp, sample_hs)
+
+    # make a dataframe
+    storms_sample = pd.DataFrame({
+        "hs": sample_hs,
+        "duration": sample_dur,
+        "direction": sample_dir,
+        "tp": sample_t
+    })
+
+    # limit to the max duration 
+    if max_dur != 0: 
+        max_dur = np.max(storms.duration)
+
+        storms_sample[storms_sample.duration < max_dur].reset_index()
+
+    return storms_sample
+
+
 def fit_gap_monsoon(storms:pd.DataFrame) -> list: 
     '''
     Fit storm gaps to a probability distribution
