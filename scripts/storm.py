@@ -67,22 +67,16 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     return storms_df
 
 
-def generate(storms: pd.DataFrame, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
+def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
     '''
     generate storm based on fitting 
     '''
-    # get gev param for hs and dur 
-    pgev_hs = gev_fit(storms.hs_max)
-    pgev_dur = gev_fit(storms.duration)
-
-    # fit copula clayton 
-    clayton_copula = fit_copulas_clayton(storms.hs_max, storms.duration, pgev_hs, pgev_dur)
-
-    # fit direction to empirical cdf 
-    ecdf_dir = empirical_cdf(storms.dir_mean)
-
-    # linear fit of wave peak 
-    p_tp = np.polyfit(storms.hs_max, storms.tp_mean, 1)
+    # unpack the parameter
+    pgev_hs = fitted_storm[0]
+    pgev_dur = fitted_storm[1]
+    clayton_copula = fitted_storm[2]
+    ecdf_dir = fitted_storm[3]
+    p_tp = fitted_storm[4]
 
     # sampling
     # sampling_size = int(sampling_size * (1+oversample))
@@ -112,6 +106,23 @@ def generate(storms: pd.DataFrame, sampling_size:int, oversample=0.1, max_dur=0)
         storms_sample[storms_sample.duration < max_dur].reset_index()
 
     return storms_sample
+
+
+def fit_storm(storms:pd.DataFrame) -> list: 
+    # get gev param for hs and dur 
+    pgev_hs = gev_fit(storms.hs_max)
+    pgev_dur = gev_fit(storms.duration)
+
+    # fit copula clayton 
+    clayton_copula = fit_copulas_clayton(storms.hs_max, storms.duration, pgev_hs, pgev_dur)
+
+    # fit direction to empirical cdf 
+    ecdf_dir = empirical_cdf(storms.dir_mean)
+
+    # linear fit of wave peak 
+    p_tp = np.polyfit(storms.hs_max, storms.tp_mean, 1)
+
+    return([pgev_hs, pgev_dur, clayton_copula, ecdf_dir, p_tp])
 
 
 def fit_gap_monsoon(storms:pd.DataFrame) -> list: 
