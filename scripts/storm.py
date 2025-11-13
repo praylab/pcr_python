@@ -168,6 +168,15 @@ def sample_ecdf(ecdf: list, sampling_size: int) -> np.array:
     '''
     return np.interp(np.random.uniform(size=sampling_size), ecdf[1], ecdf[0])
 
+def f_linear(p: list, x:np.array) -> np.array:
+    '''
+    Function to return to y = a*x + b
+    p is a list of [a, b]
+    x is the x-coordinates at which to evaluate the function 
+    return to y
+    '''
+    return p[0]*x + p[1]
+
 
 if __name__ == "__main__": # this only runs when this script is executed directly
     # test out the function using data from data/wave_srilanka.csv
