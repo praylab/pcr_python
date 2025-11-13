@@ -72,8 +72,8 @@ def generate(storms: pd.DataFrame, sampling_size:int, oversample=0.1, max_dur=0)
     generate storm based on fitting 
     '''
     # get gev param for hs and dur 
-    pgev_hs = fit_gev(storms.hs_max)
-    pgev_dur = fit_gev(storms.duration)
+    pgev_hs = gev_fit(storms.hs_max)
+    pgev_dur = gev_fit(storms.duration)
 
     # fit copula clayton 
     clayton_copula = fit_copulas_clayton(storms.hs_max, storms.duration, pgev_hs, pgev_dur)
@@ -238,5 +238,8 @@ if __name__ == "__main__": # this only runs when this script is executed directl
     ts_dur = 12.0
 
     storms = detect(hs, dir, tp, time, ts_hs, ts_dur)
+    storms_sample = generate(storms, 100)
     print("Detected storms:", storms)
+    print("sampled storms:", storms_sample)
+
 
