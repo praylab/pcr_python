@@ -108,7 +108,7 @@ def fit_gap_monsoon(storms:pd.DataFrame) -> list:
     return [gap_ecdf, lambdaYear, lambdaSts]
 
 
-def fit_gev(x: pd.Series) -> list: 
+def gev_fit(x: pd.Series) -> list: 
     '''
     Fit storm variable into gev distribution 
     :return : list of [shape, location, scale] parameter of fitted GEV distribution'''
