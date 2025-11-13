@@ -161,6 +161,14 @@ def empirical_cdf(x: pd.Series) -> list:
     return [x, np.arange(1, len(x) + 1) / len(x)]
 
 
+def sample_ecdf(ecdf: list, sampling_size: int) -> np.array:
+    '''
+    function to sample from empirical pair of x and cdf
+    
+    '''
+    return np.interp(np.random.uniform(size=sampling_size), ecdf[1], ecdf[0])
+
+
 if __name__ == "__main__": # this only runs when this script is executed directly
     # test out the function using data from data/wave_srilanka.csv
     wave_data = pd.read_csv('data/wave_srilanka.csv')
