@@ -249,7 +249,9 @@ if __name__ == "__main__": # this only runs when this script is executed directl
     ts_dur = 12.0
 
     storms = detect(hs, dir, tp, time, ts_hs, ts_dur)
-    storms_sample = generate(storms, 100)
+    fitted_storms = fit_storm(storms)
+    fitted_gap = fit_gap_monsoon(storms)
+    storms_sample = generate(fitted_storms, 100)
     print("Detected storms:", storms)
     print("sampled storms:", storms_sample)
 
