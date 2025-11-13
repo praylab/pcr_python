@@ -127,6 +127,7 @@ def gev_cdf(x: pd.Series, pgev: list) -> np.array:
     x = x.values 
     return stats.genextreme.cdf(x, pgev[0], loc=pgev[1], scale=pgev[2])
 
+
 def fit_copulas_clayton(x: pd.Series, y: pd.Series, pgev_x: list, pgev_y:list): 
     '''
     Fit two variable into bivariate joint distribution coupla clayton
@@ -142,6 +143,7 @@ def fit_copulas_clayton(x: pd.Series, y: pd.Series, pgev_x: list, pgev_y:list):
 
     return clayton_copula
 
+
 def empirical_cdf(x: pd.Series) -> list: 
     '''
     function return to sorted x and the corresponding empirical cummulative distribution function 
@@ -149,6 +151,7 @@ def empirical_cdf(x: pd.Series) -> list:
     '''
     x = np.sort(x.values)
     return [x, np.arange(1, len(x) + 1) / len(x)]
+
 
 if __name__ == "__main__": # this only runs when this script is executed directly
     # test out the function using data from data/wave_srilanka.csv
