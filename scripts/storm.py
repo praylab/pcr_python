@@ -204,7 +204,7 @@ def gev_fit(x: pd.Series) -> list:
     :return : list of [shape, location, scale] parameter of fitted GEV distribution'''
 
     x = x.values 
-    return stats.genextreme.fit(x, loc=np.mean(x)) # optimise with the first guess of location being the mean of the data
+    return stats.genextreme.fit(x, loc=np.mean(x), scale=np.std(x)) # optimise with the first guess of location being the mean of the data
     
 
 def gev_cdf(x: pd.Series, pgev: list) -> np.array:
