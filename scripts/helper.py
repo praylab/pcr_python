@@ -6,7 +6,7 @@ import pandas as pd
 
 def datenum_to_datetime_one(o, f, e=366) -> datetime:
     '''
-    Comvert a single Matlab datenum into Python datetime
+    Convert a single Matlab datenum into Python datetime
     :param o: ordinal part of datenum
     :param f: fractional part of datenum
     :param e: epoch difference between matlab and python (default 366 days)
