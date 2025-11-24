@@ -46,25 +46,28 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     # calculate the duration from the end of the last storm to the start of this storm 
     end_prev = np.concat(([start_idx[0]], peak_indices[:-1]))   # first storm has no previous storm
 
-    storms = {
-        "start": time[start_idx],
-        "end": time[peak_indices],
-        "duration": storm_nr*delta_t,
-        "time": [time[start:end] for start, end in zip(start_idx, end_idx+1)],
-        "hs": [hs[start:end] for start, end in zip(start_idx, end_idx+1)],
-        "tp": [tp[start:end] for start, end in zip(start_idx, end_idx+1)],
-        "dir": [dir[start:end] for start, end in zip(start_idx, end_idx+1)],
-        "hs_max": [np.max(hs[start:end]) for start, end in zip(start_idx, end_idx+1)],
-        "dir_mean": [np.mean(dir[start:end]) for start, end in zip(start_idx, end_idx+1)],
-        "tp_mean": [np.mean(tp[start:end]) for start, end in zip(start_idx, end_idx+1)],
-        "gap": [time[start] - time[prev] for start, prev in zip(start_idx, end_prev)]
-    }
+    # create dataframe of storm time series with storm id 
+    storms_ts = pd.DataFrame({ 
+        'time': [time[start:end] for start, end in zip(start_idx, end_idx+1)],
+        'hs': [hs[start:end] for start, end in zip(start_idx, end_idx+1)],
+        'tp': [tp[start:end] for start, end in zip(start_idx, end_idx+1)],
+        'dir': [dir[start:end] for start, end in zip(start_idx, end_idx+1)],
+    }).explode(['time', 'hs', 'tp', 'dir']).reset_index(drop=False).rename(columns={'index': 'storm_id'})
 
-    storms_df = pd.DataFrame(storms)
+    # create DataFrame of storm statistics 
+    storms_df = pd.DataFrame()
 
-    storms_df["season"] = np.where(np.array(storms["gap"]) > 150, 1, 0)
+    storms_df['start'] = storms_ts.groupby('storm_id')['time'].first()
+    storms_df['end'] = storms_ts.groupby('storm_id')['time'].last()
+    storms_df['duration'] = storm_nr*delta_t
+    storms_df['hs_max'] = storms_ts.groupby('storm_id')['hs'].max().astype(float)
+    storms_df['dir_mean'] = storms_ts.groupby('storm_id')['dir'].mean().astype(float)
+    storms_df['tp_mean'] = storms_ts.groupby('storm_id')['tp'].mean().astype(float)
+    storms_df['gap'] = [time[start] - time[prev] for start, prev in zip(start_idx, end_prev)]
 
-    return storms_df
+    storms_df["season"] = np.where(np.array(storms_df["gap"]) > 150, 1, 0)
+
+    return storms_df, storms_ts
 
 
 def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
