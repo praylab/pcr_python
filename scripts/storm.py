@@ -251,12 +251,26 @@ def empirical_cdf(x: pd.Series) -> list:
     return [x, np.arange(1, len(x) + 1) / len(x)]
 
 
-def sample_ecdf(ecdf: list, sampling_size: int) -> np.array:
+def sample_ecdf(ecdf: list, sampling_size: int=None, r: np.array=None) -> np.array:
     '''
-    function to sample from empirical pair of x and cdf
+    Function to sample from empirical pair of x and cdf.
+    :param ecdf: list of [x, cdf]
+    :param sampling_size: int, number of samples to generate (required if r is None)
+    :param r: np.array, uniform random numbers between 0 and 1 to be used for sampling (optional)
     
+    :return : np.array of sampled values from empirical distribution
     '''
-    return np.interp(np.random.uniform(size=sampling_size), ecdf[1], ecdf[0])
+    # If r is not provided, generate it and determine sampling size
+    if r is None:
+        if sampling_size is None:
+            raise ValueError("Either 'r' or 'sampling_size' must be provided.")
+        r = np.random.uniform(size=sampling_size)
+    else:
+        # If r is provided, use its length as the sampling size
+        sampling_size = len(r)
+
+    # Perform the interpolation
+    return np.interp(r, ecdf[1], ecdf[0])
 
 def f_linear(p: list, x:np.array) -> np.array:
     '''
