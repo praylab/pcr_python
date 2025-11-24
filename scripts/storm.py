@@ -108,6 +108,25 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
 
     return storms_sample
 
+def sampling_gap_ecdf(fitted_gap: dict, storms_sample: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Function to sample gap from empirical CDF and add to storms_sample DataFrame
+    Args:
+        fitted_gap (dict): dictionary containing fitted gap information
+        storms_sample (pd.DataFrame): DataFrame containing sampled storms
+    '''
+
+    # sample gap from empirical CDF
+    sampling_size = storms_sample.shape[0]
+
+    gaps = fitted_gap['ecdf_gap'][0]
+    p_gap = fitted_gap['ecdf_gap'][1]
+
+    p_below = p_gap[np.where(gaps >= 1)[0][0]]
+    r = np.random.uniform(size=sampling_size) * (1-p_below) + p_below
+
+    storms_sample["gap"] = sample_ecdf(fitted_gap['ecdf_gap'], r=r).astype(float)
+
     return storms_sample
 
 
