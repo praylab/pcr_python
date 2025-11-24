@@ -108,6 +108,77 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
 
     return storms_sample
 
+
+# TODO: maybe make the function simple? 
+def generate_monsoon_ts(date_start: datetime, date_end: datetime, storms_sample: pd.DataFrame, fitted_gap: pd.DataFrame, start_storm: int = 0) -> pd.DataFrame: 
+    '''
+    Function to generate one simulation from date_start to date_end 
+    '''
+
+    sim_days = (date_end-date_start).days
+    sim_years = date_end.year-date_start.year
+    size_year = int(sim_years*1.2)
+    size_storm = len(storms_sample)
+    dur_day = storms_sample['duration']/24
+
+    # sample year storm season length
+    year_sample = np.random.poisson(lam=fitted_gap['lambda_year'], size=size_year)
+    season_sample = np.random.poisson(lam=fitted_gap['lambda_season'], size=size_year)
+
+    storm_count = start_storm
+    season_count = 0
+    day_count = 0
+    storm_synth = []
+
+    while day_count < sim_days:
+        # fill the storm season
+        start_season = day_count
+        end_season = day_count + season_sample[season_count] 
+        
+        while day_count < end_season:
+            
+            if storm_count > size_storm:
+                raise ValueError('samples are exhausted')
+            
+            hs_i = storms_sample['hs'][storm_count]
+            dir_i = storms_sample['direction'][storm_count]
+            dur_i = storms_sample['duration'][storm_count]
+            tp_i = storms_sample['tp'][storm_count]
+            start_i = day_count
+            end_i = day_count + dur_day[storm_count]
+
+            day_count += dur_day[storm_count] + storms_sample['gap'][storm_count]
+            storm_count += 1
+
+            storm_synth.append({
+                'hs': hs_i, 
+                'direction': dir_i,
+                'duration': dur_i,
+                'tp': tp_i,
+                'day_start': start_i,
+                'day_end': end_i
+            })
+
+        # move to the next season
+        day_count = start_season + year_sample[season_count]
+        season_count += 1
+
+    synthetic_storm = pd.DataFrame(storm_synth)
+
+    # gap is defined as the day length from the end of last storm to the start of this storm
+    # day_end = synthetic_storm["day_end"].values
+    # next_day_start = np.concatenate([synthetic_storm["day_start"][1:].values, [synthetic_storm["day_end"].iloc[-1]]]) # leaving the last storm has 0 gap
+    
+    # synthetic_storm["gap"] = next_day_start-day_end
+
+    day_start = synthetic_storm["day_start"].values
+    prev_day_end = np.concatenate([[synthetic_storm["day_start"].iloc[0]], synthetic_storm["day_end"][:-1].values]) # leaving the first storm has 0 gap
+
+    synthetic_storm['gap'] = day_start - prev_day_end
+
+    return synthetic_storm
+
+
 def sampling_gap_ecdf(fitted_gap: dict, storms_sample: pd.DataFrame) -> pd.DataFrame:
     '''
     Function to sample gap from empirical CDF and add to storms_sample DataFrame
