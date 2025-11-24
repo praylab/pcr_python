@@ -83,8 +83,7 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
     p_tp = fitted_storm['lin_tp']
 
     # sampling
-    # sampling_size = int(sampling_size * (1+oversample))
-    sampling_size = int(100*1.1)
+    sampling_size = int(sampling_size * (1+oversample))
 
     # sample Hs and Duration 
     [sample_hs, sample_dur] = sample_copula_clayton(clayton_copula, pgev_hs, pgev_dur, sampling_size)
