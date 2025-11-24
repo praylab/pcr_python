@@ -104,9 +104,9 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
 
     # limit to the max duration 
     if max_dur != 0: 
-        max_dur = np.max(storms.duration)
+        storms_sample = storms_sample[storms_sample.duration < max_dur].reset_index(drop=True)
 
-        storms_sample[storms_sample.duration < max_dur].reset_index()
+    return storms_sample
 
     return storms_sample
 
