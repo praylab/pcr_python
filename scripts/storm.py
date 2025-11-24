@@ -75,11 +75,11 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
     generate storm based on fitting 
     '''
     # unpack the parameter
-    pgev_hs = fitted_storm[0]
-    pgev_dur = fitted_storm[1]
-    clayton_copula = fitted_storm[2]
-    ecdf_dir = fitted_storm[3]
-    p_tp = fitted_storm[4]
+    pgev_hs = fitted_storm['gev_hs']
+    pgev_dur = fitted_storm['gev_dur']
+    clayton_copula = fitted_storm['clayton']
+    ecdf_dir = fitted_storm['ecdf_dir']
+    p_tp = fitted_storm['lin_tp']
 
     # sampling
     # sampling_size = int(sampling_size * (1+oversample))
@@ -125,7 +125,13 @@ def fit_storm(storms:pd.DataFrame) -> list:
     # linear fit of wave peak 
     p_tp = np.polyfit(storms.hs_max, storms.tp_mean, 1)
 
-    return([pgev_hs, pgev_dur, clayton_copula, ecdf_dir, p_tp])
+    return({
+     "gev_hs": pgev_hs, 
+     "gev_dur": pgev_dur, 
+     "clayton": clayton_copula, 
+     "ecdf_dir": ecdf_dir, 
+     "lin_tp": p_tp   
+    })
 
 
 def fit_gap_monsoon(storms:pd.DataFrame) -> list: 
@@ -166,7 +172,11 @@ def fit_gap_monsoon(storms:pd.DataFrame) -> list:
     lambdaYear = np.mean(year)
     lambdaSts = np.mean(storm_season)
 
-    return [gap_ecdf, lambdaYear, lambdaSts]
+    return {
+        'ecdf_gap': gap_ecdf, 
+        'lambda_year': lambdaYear,
+        'lambda_season': lambdaSts
+    }
 
 
 def gev_fit(x: pd.Series) -> list: 
