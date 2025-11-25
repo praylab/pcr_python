@@ -61,5 +61,20 @@ def load_mat_to_df(file_path: str, struct_name: str) -> pd.DataFrame:
     # Return to a DataFrame
     return pd.DataFrame(struct_dict)
 
-def date_add_day(date_ref: datetime, days: np.array) -> list:
+def calculate_days_since_date(date: datetime, date_ref:datetime) -> int: 
+    '''
+    Calculate days since ref date 1st January of 2018 from a datetime
+    :return : int of number of days, it could be negative denoting how many days before ref date
+    '''
+    return (date - date_ref).days
+
+def calculate_days_since_2018(date: datetime) -> int: 
+    '''
+    Extension from calculate_days_since_date to calculate days since the AR5 SLR reference date
+    (1st of January 2018)
+    :return : int of number of days
+    '''
+    return (calculate_days_since_date(date, date_ref=datetime(2018,1,1)))
+
+def date_add_days(date_ref: datetime, days: np.array) -> list:
     return [date_ref + timedelta(days=day) for day in days]
