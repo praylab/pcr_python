@@ -135,7 +135,7 @@ def generate_monsoon_ts(date_start: datetime, date_end: datetime, storms_sample:
         start_season = day_count
         end_season = day_count + season_sample[season_count] 
         
-        while day_count < end_season:
+        while (day_count < end_season) and (day_count < sim_days):
             
             if storm_count > size_storm:
                 raise ValueError('samples are exhausted')
