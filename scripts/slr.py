@@ -32,20 +32,18 @@ def calculate_slr(days_since_2018, scenario, projection='AR5'):
     slr = a * (days_since_2018 ** 2) + b * days_since_2018
     return slr
 
-def calculate_days_since_date(date: datetime, date_ref:datetime) -> int: 
-    '''
-    Calculate days since ref date 1st January of 2018 from a datetime
-    :return : int of number of days, it could be negative denoting how many days before ref date
-    '''
-    return (date - date_ref).days
+def simulate_slr(synthetic_storm: pd.DataFrame, date_start, scenario, wl0) -> pd.Series:
+    # calculate days since the refer date (1st of January 2018)
+    if scenario == '0':
+        return pd.Series(np.zeros(len(synthetic_storm)))
 
-def calculate_days_since_2018(date: datetime) -> int: 
-    '''
-    Extension from calculate_days_since_date to calculate days since the AR5 SLR reference date
-    (1st of January 2018)
-    :return : int of number of days
-    '''
-    return (calculate_days_since_date(date, date_ref=datetime(2018,1,1)))
+    days = (date_start - datetime(2018, 1, 1)).days + synthetic_storm['day_start']
+
+    slr_values = calculate_slr(days, scenario)
+
+    # return to series of water level change where on the first day equal to wl0
+    return pd.Series(wl0 - slr_values[0] + slr_values)
+    
 
 # TODO: ar6 projection
 
