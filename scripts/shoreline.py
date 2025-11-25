@@ -54,3 +54,23 @@ def track_shoreline(storms: pd.DataFrame) -> pd.DataFrame:
     shoreline_track['shoreline_position'] = x0 + shoreline_track['shoreline_change'].cumsum()
 
     return shoreline_track
+
+
+def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: datetime) -> np.array:
+    '''
+    Function to calculate annual statistics of shoreline position based on the passed kind
+    :param shoreline_track: DataFrame which consist of shoreline position on a simulation 
+    :param kind: string of the kind of statistics. Available statistics are 'min', 'max', 'mean'
+    :return : an array of chosen statistics on each year of simulation 
+    '''
+    # get an alias 
+    track = shoreline_track
+    track['time'] = helper.date_add_days(date_start, shoreline_track['day'])
+    track['year'] = track['time'].dt.year
+    
+    valid_kinds = ['min', 'max', 'mean']
+
+    if kind not in valid_kinds: 
+        raise ValueError('Invalid kind parameter. Please choose "mean", "min", or "max" as the kind parameter.')
+
+    return shoreline_track[['year', 'shoreline_position']].groupby('year').agg(kind).values
