@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from datetime import datetime
-from scripts import helper
+from scripts import helper, storm, slr, erosion
 
 def calculate_recovery(storms: pd.DataFrame, rec_rate: float) -> pd.Series: 
     '''
@@ -74,3 +74,94 @@ def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: 
         raise ValueError('Invalid kind parameter. Please choose "mean", "min", or "max" as the kind parameter.')
 
     return shoreline_track[['year', 'shoreline_position']].groupby('year').agg(kind).values
+
+
+def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime, date_end: datetime, nr_simulation: int, nr_batch: int, stat_kind: str, max_dur) -> pd.DataFrame: 
+
+    # storm char
+    yearly_storm = 8
+    nr_storm = (date_end.year - date_start.year) * yearly_storm
+
+    # initialize an array 
+    shoreline_stats = np.empty((101, nr_simulation))
+    # shoreline_stats = []
+
+    sim_count = 0
+
+    while sim_count < nr_simulation:
+        sampling_size = nr_storm * nr_batch
+
+        # generate storm sample
+        storms_sample = storm.generate(
+            fitted_storm=fitted_storms, 
+            sampling_size=sampling_size, 
+            oversample=0.1, 
+            max_dur=max_dur)
+
+        # add gaps
+        storms_sample = storm.sampling_gap_ecdf(
+            fitted_gap=fitted_gap, 
+            storms_sample=storms_sample
+        )
+
+        storm_count = 0
+
+        for sim in range(nr_batch):
+
+            # generate storm time series from date start to date end
+            synthetic_storm = storm.generate_monsoon_ts(
+                date_start=date_start, 
+                date_end=date_end, 
+                storms_sample=storms_sample, 
+                fitted_gap=fitted_gap, 
+                start_storm=storm_count
+            )
+
+            storm_count += len(synthetic_storm)
+
+            # simulate sea level rise 
+            synthetic_storm['slr'] = slr.simulate_slr(
+                synthetic_storm=synthetic_storm, 
+                date_start=date_start, 
+                scenario='0', 
+                wl0=0
+            )
+
+            # calculate storm-induced erosion
+            _, synthetic_storm['erosion_storm'] = erosion.mendoza(synthetic_storm)
+
+            # calculate recovery 
+            synthetic_storm['recovery'] = calculate_recovery(
+                storms=synthetic_storm,
+                rec_rate=7/365
+            )
+
+            # calculate retreat due to slr 
+            synthetic_storm['slr_retreat'] = calculate_slr_retreat(
+                storms=synthetic_storm, 
+                m=0.024
+            )
+
+            # track shoreline evolution 
+            shoreline_track = track_shoreline(synthetic_storm)
+
+            row = get_annual_statistics(shoreline_track, kind=stat_kind, date_start=date_start)
+            
+            try:
+                shoreline_stats[:, sim_count] = row.flatten()
+            except: 
+                sim_count -= 1 # if there are any missing year, re-do the simulation
+
+            # if sim_count == 0:
+            #     shoreline_stats.append(row)
+            # elif shoreline_stats[sim_count-1].shape[0] == row.shape[0]:
+            #     shoreline_stats.append(row)
+            # else: 
+            #     sim_count -= 1
+
+            sim_count += 1
+
+            if sim_count >= nr_simulation:
+                break
+
+    return shoreline_stats
