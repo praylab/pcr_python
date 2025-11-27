@@ -18,3 +18,9 @@ venv/
 
 # explore notebook 
 explore.ipynb
+
+# data from matlab for comparison 
+*.mat
+
+# temp outputs
+data/output
