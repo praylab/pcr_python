@@ -1,0 +1,365 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P1", 
+        "flag_sandy": 0
+      },
+      "geometry": {
+        "coordinates": [
+          -141.55795910118295,
+          58.79680383179942
+        ],
+        "type": "Point"
+      },
+      "id": 0
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P2",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -124.24121342404814,
+          38.192597084739276
+        ],
+        "type": "Point"
+      },
+      "id": 1
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P3",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -71.16679611155978,
+          40.62462944937735
+        ],
+        "type": "Point"
+      },
+      "id": 2
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P4",
+        "flag_sandy": 0
+      },
+      "geometry": {
+        "coordinates": [
+          -10.951014351175218,
+          52.75162244069253
+        ],
+        "type": "Point"
+      },
+      "id": 3
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P5",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          142.81248438244177,
+          41.29302655229645
+        ],
+        "type": "Point"
+      },
+      "id": 4
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P6",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -92.34033823129553,
+          13.19270566082443
+        ],
+        "type": "Point"
+      },
+      "id": 5
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P7",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -96.55343366311317,
+          24.925663492913003
+        ],
+        "type": "Point"
+      },
+      "id": 6
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P8",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          13.933318308948003,
+          36.37289748248753
+        ],
+        "type": "Point"
+      },
+      "id": 7
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P9",
+        "flag_sandy": 0
+      },
+      "geometry": {
+        "coordinates": [
+          -52.26050781823197,
+          6.319991270768924
+        ],
+        "type": "Point"
+      },
+      "id": 8
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P10",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -12.097279555167404,
+          5.446739285216594
+        ],
+        "type": "Point"
+      },
+      "id": 9
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P11",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          59.23065115128128,
+          19.342437160839438
+        ],
+        "type": "Point"
+      },
+      "id": 10
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P12",
+        "flag_sandy": 0
+      },
+      "geometry": {
+        "coordinates": [
+          89.51761130576489,
+          20.99047564895507
+        ],
+        "type": "Point"
+      },
+      "id": 11
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P13",
+        "flag_sandy": 0
+      },
+      "geometry": {
+        "coordinates": [
+          127.70559883457872,
+          27.78116231433495
+        ],
+        "type": "Point"
+      },
+      "id": 12
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P14",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -71.4121044833386,
+          -21.400743349373244
+        ],
+        "type": "Point"
+      },
+      "id": 13
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P15",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -41.336087740852975,
+          -23.89361823801039
+        ],
+        "type": "Point"
+      },
+      "id": 14
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P16",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          13.052876667715196,
+          -11.041704144126811
+        ],
+        "type": "Point"
+      },
+      "id": 15
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P17",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          40.787387421082514,
+          -3.0048935509788635
+        ],
+        "type": "Point"
+      },
+      "id": 16
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P18",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          100.93945345086098,
+          -4.981023604103541
+        ],
+        "type": "Point"
+      },
+      "id": 17
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P19",
+        "flag_sandy": 0
+      },
+      "geometry": {
+        "coordinates": [
+          141.64107050372547,
+          -1.9252745447798674
+        ],
+        "type": "Point"
+      },
+      "id": 18
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P20",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          -74.86744800456577,
+          -54.009717026532904
+        ],
+        "type": "Point"
+      },
+      "id": 19
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P21",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          17.881943012199372,
+          -35.56282938473494
+        ],
+        "type": "Point"
+      },
+      "id": 20
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P22",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          113.87315485886324,
+          -35.122115554607426
+        ],
+        "type": "Point"
+      },
+      "id": 21
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P23",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          153.49425475914404,
+          -31.35764629026358
+        ],
+        "type": "Point"
+      },
+      "id": 22
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station": "P24",
+        "flag_sandy": 1
+      },
+      "geometry": {
+        "coordinates": [
+          172.40432516609587,
+          -44.632262372711374
+        ],
+        "type": "Point"
+      },
+      "id": 23
+    }
+  ]
+}
