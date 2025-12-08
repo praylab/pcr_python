@@ -25,3 +25,6 @@ explore.ipynb
 # temp outputs
 data/output
 data/ERA5
+
+# .idx file which created when open GRIB files
+.idx 
