@@ -76,7 +76,7 @@ def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: 
     return shoreline_track[['year', 'shoreline_position']].groupby('year').agg(kind).values
 
 
-def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime, date_end: datetime, nr_simulation: int, nr_batch: int, stat_kind: str, max_dur) -> pd.DataFrame: 
+def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime, date_end: datetime, nr_simulation: int, nr_batch: int, stat_kind: str, rec_rate, max_dur) -> pd.DataFrame: 
 
     # storm char
     yearly_storm = 8
