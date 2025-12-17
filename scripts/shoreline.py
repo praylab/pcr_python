@@ -119,6 +119,8 @@ def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime,
 
             storm_count += len(synthetic_storm)
 
+## TO-DO: check the code before this line
+
             # simulate sea level rise 
             synthetic_storm['slr'] = slr.simulate_slr(
                 synthetic_storm=synthetic_storm, 
@@ -133,7 +135,7 @@ def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime,
             # calculate recovery 
             synthetic_storm['recovery'] = calculate_recovery(
                 storms=synthetic_storm,
-                rec_rate=7/365
+                rec_rate=rec_rate #7/365
             )
 
             # calculate retreat due to slr 
