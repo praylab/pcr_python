@@ -313,8 +313,8 @@ def fit_copulas_clayton(x: pd.Series, y: pd.Series, pgev_x: list, pgev_y:list):
 
 def sample_copula_clayton(clayton_copula:Clayton, pgev_x:list, pgev_y:list, sampling_size:int) -> list:
     u = clayton_copula.sample(sampling_size)
-    x = stats.genextreme.ppf(u[:,0], pgev_x[0], pgev_x[1], pgev_x[2])
-    y = stats.genextreme.ppf(u[:,1], pgev_y[0], pgev_y[1], pgev_y[2])
+    x = stats.genextreme.ppf(u[:,0], pgev_x[0], pgev_x[1], pgev_x[2]).astype(np.float32)
+    y = stats.genextreme.ppf(u[:,1], pgev_y[0], pgev_y[1], pgev_y[2]).astype(np.float32)
 
     return [x,y]
 
