@@ -130,6 +130,12 @@ def generate_monsoon_ts(date_start: datetime, date_end: datetime, storms_sample:
     day_count = 0
     storm_synth = []
 
+    hs = storms_sample['hs']
+    dir = storms_sample['direction']
+    dur = storms_sample['duration']
+    tp = storms_sample['tp']
+    gap = storms_sample['gap']
+
     while day_count < sim_days:
         # fill the storm season
         start_season = day_count
@@ -140,14 +146,14 @@ def generate_monsoon_ts(date_start: datetime, date_end: datetime, storms_sample:
             if storm_count >= size_storm:
                 raise ValueError('samples are exhausted')
             
-            hs_i = storms_sample['hs'][storm_count]
-            dir_i = storms_sample['direction'][storm_count]
-            dur_i = storms_sample['duration'][storm_count]
-            tp_i = storms_sample['tp'][storm_count]
+            hs_i = hs[storm_count]
+            dir_i = dir[storm_count]
+            dur_i = dur[storm_count]
+            tp_i = tp[storm_count]
             start_i = day_count
             end_i = day_count + dur_day[storm_count]
 
-            day_count += dur_day[storm_count] + storms_sample['gap'][storm_count]
+            day_count += dur_day[storm_count] + gap[storm_count]
             storm_count += 1
 
             storm_synth.append({
