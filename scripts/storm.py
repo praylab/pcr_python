@@ -100,7 +100,7 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
         "duration": sample_dur,
         "direction": sample_dir,
         "tp": sample_t
-    })
+    }).astype(np.float32)
 
     # limit to the max duration 
     if max_dur != 0: 
