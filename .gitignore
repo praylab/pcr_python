@@ -28,4 +28,7 @@ data/ERA5
 data/test
 
 # .idx file which created when open GRIB files
-.idx 
+.idx
+
+# dotenv environement file 
+.env
