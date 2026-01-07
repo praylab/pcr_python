@@ -71,6 +71,25 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     return storms_df, storms_ts
 
 
+def dependent_storm(hs:np.array, delta_t:float, start_indices:np.array, end_indices:np.array, ts_between:float=48):
+    '''
+    return an array of storm number which is dependent to the next consecutive storm. 
+    :param hs: an array-like of significant wave height 
+    :param delta_t: time delta between two hs point, in hour
+    :param start_indices: an array-like of indices of the start of all detected storm 
+    :param end_indices: an array-like of indices of the end of all detected storm 
+    :param ts_between: minimum time between two consecutive storm that is assumed to be independent, in hour
+    :return: list 
+    '''
+    # find the indices of peak of each storm
+    peak_indices = [hs[start:end].argmax() for start, end in zip(start_indices, end_indices+1)] + start_indices
+
+    # find the peaks which are assumed not independent
+    dep_storm_nr = np.where(np.diff(peak_indices)*delta_t < ts_between)
+
+    return dep_storm_nr
+
+
 def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
     '''
     generate storm based on fitting 
