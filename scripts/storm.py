@@ -6,7 +6,7 @@ from datetime import datetime
 from scipy import stats
 from copulas.bivariate import Clayton
 
-def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array, ts_dur:np.array) -> pd.DataFrame:
+def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:float, ts_dur:float, ts_between:float=0) -> pd.DataFrame:
     '''
     Detect storms from a time series of wave with Peak Over Threshold approach
     :param hs: np.array, series of significant wave heights in meters
@@ -15,6 +15,7 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     :param time: np.array, series of time points corresponding to hs, dir, tp in days 
     :param ts_hs: float, threshold percentile of significant wave height to define a storm in percentage (e.g., 95 for 95th percentile)
     :param ts_dur: float, threshold duration (in hours) to define a storm in hours
+    :param ts_between: minimum time between two consecutive storm that is assumed to be independent, in hour
     :return: dataframe of detected storms with start time, end time, duration, max hs, mean dir, mean tp
     '''
 
@@ -43,6 +44,15 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     # Collect storm statistics
     start_idx = end_indices - storm_step
     end_idx = end_indices
+
+    # detect dependent storm if any threshold is given
+    if ts_between != 0:
+
+        # detect storm which is dependent to the next storm 
+        dep_storm_nr = dependent_storm(hs, delta_t, start_idx, end_idx, ts_between)
+
+        # merge the dependent storm 
+        start_idx, end_idx, storm_step = merge_dep_storm(dep_storm_nr, start_idx, end_idx)
 
     # calculate the duration from the end of the last storm to the start of this storm 
     end_prev = np.concat(([start_idx[0]], end_idx[:-1]))   # first storm has no previous storm
