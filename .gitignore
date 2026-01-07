@@ -17,7 +17,7 @@ venv/
 .venv/
 
 # notebooks
-explore.ipynb
+*.ipynb
 
 # data from matlab for comparison 
 *.mat
