@@ -90,6 +90,28 @@ def dependent_storm(hs:np.array, delta_t:float, start_indices:np.array, end_indi
     return dep_storm_nr
 
 
+def merge_dep_storm(dep_storm_nr: np.array, start_indices:np.array, end_indices: np.array):
+    '''
+    return arrays of start and end indices of independent storm.
+    :param dep_storm_nr: an array-like of the number of dependent storm 
+    :param start_indices: an array-like of indices of the start of all detected storm 
+    :param end_indices: an array-like of indices of the end of all detected storm 
+    :return start_new: an array-like of indices of the start of independent storm
+    :return end_new: an array-like of indices of the end of independent storm
+    :return storm_step_new: an array-like of number of wave timestep inside each storm 
+    '''
+    # remove start on index dep_storm_nr + 1 
+    start_new = np.array([start_indices[i] for i in range(len(start_indices)) if i not in dep_storm_nr[0] + 1])
+
+    # remove end on index dep_storm_nr
+    end_new = np.array([end_indices[i] for i in range(len(start_indices)) if i not in dep_storm_nr[0]])
+
+    # calculate new storm step 
+    storm_step_new = end_new - start_new
+
+    return start_new, end_new, storm_step_new
+
+
 def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
     '''
     generate storm based on fitting 
