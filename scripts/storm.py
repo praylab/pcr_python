@@ -33,19 +33,19 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
             storm_dur_cum[i] = storm_dur_cum[i-1] + storm_dur[i]
 
     # find the peak of duration at the end of each storm
-    peaks, props = signal.find_peaks(storm_dur_cum, height=ts_dur)
+    ends, props = signal.find_peaks(storm_dur_cum, height=ts_dur)
     mask = props["peak_heights"] > ts_dur
-    peak_indices = peaks[mask]
+    end_indices = ends[mask]
 
     # count number of Hs on each storm cluster 
-    storm_nr = (storm_dur_cum[peak_indices] / delta_t).astype(int)
+    storm_nr = (storm_dur_cum[end_indices] / delta_t).astype(int)
 
     # Collect storm statistics
-    start_idx = peak_indices - storm_nr
-    end_idx = peak_indices
+    start_idx = end_indices - storm_nr
+    end_idx = end_indices
 
     # calculate the duration from the end of the last storm to the start of this storm 
-    end_prev = np.concat(([start_idx[0]], peak_indices[:-1]))   # first storm has no previous storm
+    end_prev = np.concat(([start_idx[0]], end_idx[:-1]))   # first storm has no previous storm
 
     # create dataframe of storm time series with storm id 
     storms_ts = pd.DataFrame({ 
