@@ -38,10 +38,10 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
     end_indices = ends[mask]
 
     # count number of Hs on each storm cluster 
-    storm_nr = (storm_dur_cum[end_indices] / delta_t).astype(int)
+    storm_step = (storm_dur_cum[end_indices] / delta_t).astype(int)
 
     # Collect storm statistics
-    start_idx = end_indices - storm_nr
+    start_idx = end_indices - storm_step
     end_idx = end_indices
 
     # calculate the duration from the end of the last storm to the start of this storm 
@@ -60,7 +60,7 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:np.array
 
     storms_df['start'] = storms_ts.groupby('storm_id')['time'].first()
     storms_df['end'] = storms_ts.groupby('storm_id')['time'].last()
-    storms_df['duration'] = storm_nr*delta_t
+    storms_df['duration'] = storm_step*delta_t
     storms_df['hs_max'] = storms_ts.groupby('storm_id')['hs'].max().astype(float)
     storms_df['dir_mean'] = storms_ts.groupby('storm_id')['dir'].mean().astype(float)
     storms_df['tp_mean'] = storms_ts.groupby('storm_id')['tp'].mean().astype(float)
