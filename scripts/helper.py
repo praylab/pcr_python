@@ -32,6 +32,21 @@ def datenum_to_datetime(datenum: np.array) -> datetime:
     
     return np.array([datenum_to_datetime_one(o, f) for o, f in zip(ordinal, frac)])
 
+def datetime_to_datenum(py_dt) -> float: 
+    '''
+    retun a float that represent Matlab datenum. 
+    :param py_dt: datetime.datetime object 
+    '''
+    # datenum include ordinal part of the datenum
+    ordinal = datetime.toordinal(py_dt)
+
+    # calculate the fraction of the day 
+    frac = (py_dt - datetime(year=py_dt.year, month=py_dt.month, day=py_dt.day)) / timedelta(days=1) 
+
+    # epoch difference 
+    epoch = 366 
+
+    return ordinal + frac + epoch
 
 def load_mat_to_df(file_path: str, struct_name: str) -> pd.DataFrame:
     '''
