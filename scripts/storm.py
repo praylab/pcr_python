@@ -4,6 +4,7 @@ import scipy.signal as signal
 
 from datetime import datetime
 from scipy import stats
+from scripts import helper
 from copulas.bivariate import Clayton
 
 def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:float, ts_dur:float, ts_between:float=0) -> pd.DataFrame:
@@ -325,6 +326,53 @@ def fit_gap_monsoon(storms:pd.DataFrame) -> list:
         'lambda_season': lambdaSts
     }
 
+
+def fit_lambda(storms:pd.DataFrame, fillna:str=None) -> list: 
+    '''
+    Fit monthly lambda for non-homogeneous poisson process
+
+    '''
+    # get the monthly count of storm
+    count_df = monthly_count(storms)
+    
+    # calculate data length in year
+    date_storm = helper.datenum_to_datetime(storms['start'])
+    years = date_storm[-1].year - date_storm[0].year
+
+    # calculate the rate of event in event/year
+    lambdas = (count_df['count'] / years * 12)
+
+    # handle nans (if any)
+    if fillna == 'interp': 
+        lambdas = helper.interp_nan_array(lambdas.values)
+    elif fillna == 'zeros': 
+        lambdas = lambdas.fillna(0).values
+    elif fillna == None: 
+        pass
+    # raise error?
+    else: 
+        print('Pick between "interp" or "zeros"')
+
+    return lambdas
+
+def monthly_count(storms:pd.DataFrame) -> pd.DataFrame:
+    '''
+    Function to count monthly storm from storms DataFrame
+    '''
+    # get the datetime of storm to gain month 
+    date_storm = helper.datenum_to_datetime(storms['start'])
+    storms['months'] = [dt.month for dt in date_storm]
+
+    # count monthly storm 
+    count_df = pd.DataFrame({
+        'months': np.arange(1,13)
+    }).set_index('months')
+
+    count_df['count'] = storms[['hs_max', 'months']].groupby('months').count().rename(columns={
+            'hs_max': 'count'
+        })
+
+    return count_df
 
 def gev_fit(x: pd.Series) -> list: 
     '''
