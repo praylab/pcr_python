@@ -101,3 +101,17 @@ def calculate_days_since_2018(date: datetime) -> int:
 
 def date_add_days(date_ref: datetime, days: np.array) -> list:
     return [date_ref + timedelta(days=day) for day in days]
+
+def interp_nan_array(y:np.array):
+    '''
+    Helper to fill NaN values with interpolation to the surrounding value. 
+    :param y: array_like of numbers with NaNs
+    :return y: array_like with NaNs replaced with interpolated value
+    '''
+
+    nans = np.isnan(y)
+    x = lambda z: z.nonzero()[0]
+
+    y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+
+    return y 
