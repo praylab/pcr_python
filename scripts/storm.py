@@ -372,6 +372,58 @@ def fit_lambda(storms:pd.DataFrame, fillna:str=None) -> list:
 
     return lambdas
 
+
+def fit_lambda_gap(storms:pd.DataFrame, fillna:str=None) -> list: 
+    '''
+    Fit yearly event intensity (lambda) from storm gaps instead of interval between storm starts
+    
+    :param storms: DataFrame of detected storms with 'duration' and 'start' columns
+    :type storms: pd.DataFrame
+    :param fillna: method to handle NaN values in lambda calculation ('interp' or 'zeros')
+    :type fillna: str
+    :return: lambda value for each month 
+    :rtype: list
+    '''
+    # Fit lambda to the gap, rather than to the interval between storm starts
+    # get the monthly count of storm
+    count_df = monthly_count(storms)
+
+    # create copy of detected storm to avoid modifying original data
+    storms = storms[['duration', 'start']].copy()
+    storms['date_start'] = helper.datenum_to_datetime(storms['start'])
+    # TODO: might be wrong? if the entry is not covering the whole year. Additionally is it should be +1? 
+    n_year = storms['date_start'].dt.year.max() - storms['date_start'].dt.year.min() 
+
+    # get the monthly total duration of storm (in hours)
+    count_df['sum_dur'] = storms.groupby(by=storms['date_start'].dt.month)['duration'].sum() # in hours 
+
+    # calculate the amount of 'available time' in each month (in hours)
+    hour_month = np.array([31,28.25,31,30,31,30,31,31,30,31,30,31]) * 24
+    hour_month_total = hour_month * n_year
+
+    # calculate modified year: number of year equivalent without storm activity 
+    count_df['year'] = (hour_month_total - count_df['sum_dur']) / hour_month
+
+    # calculate the intensity of storm per year for each month  
+    count_df['lambda_mod'] = count_df['count'] / count_df['year'] * 12
+
+    lambdas = count_df['lambda_mod']
+
+    # handle nans (if any)
+    fillna = 'zeros'  
+    if fillna == 'interp': 
+        lambdas = helper.interp_nan_array(lambdas.values)
+    elif fillna == 'zeros': 
+        lambdas = lambdas.fillna(0).values
+    elif fillna == None: 
+        pass
+    # raise error?
+    else: 
+        print('Pick between "interp" or "zeros"')
+
+    return lambdas
+
+
 def monthly_count(storms:pd.DataFrame) -> pd.DataFrame:
     '''
     Function to count monthly storm from storms DataFrame
