@@ -10,6 +10,12 @@ def calculate_recovery(storms: pd.DataFrame, rec_rate: float) -> pd.Series:
     '''
     return storms['gap'] * rec_rate
 
+def vector_calculate_recovery(gaps: np.array, rec_rate: float) -> pd.Series: 
+    '''
+    Function to calculate shoreline recovery in between two storms 
+    '''
+    return gaps * rec_rate
+
 
 def calculate_inundation(wl0: float, wl: float, m: float) -> float: 
     '''
@@ -30,6 +36,20 @@ def calculate_slr_retreat(storms: pd.DataFrame, m: float) -> pd.Series:
 
     retreat.insert(0,0)
     return pd.Series(retreat)
+
+
+def vector_calculate_slr_retreat(slrs: np.array, m: float) -> pd.Series: 
+    '''
+    Function to calculate shoreline retreat for a simulation of storms
+    :param : storms a DataFrame which has sea level rise column
+    :return : a series of shoreline retreat due to SLR
+    '''
+    wl1 = slrs[:-1]
+    wl2 = slrs[1:]
+    retreat = [calculate_inundation(wl1, wl2, m) for wl1, wl2 in zip(wl1, wl2)]
+
+    retreat.insert(0,0)
+    return np.array(retreat)
 
 
 def track_shoreline(storms: pd.DataFrame) -> pd.DataFrame:
@@ -56,6 +76,29 @@ def track_shoreline(storms: pd.DataFrame) -> pd.DataFrame:
     return shoreline_track
 
 
+def vector_track_shoreline(day_start:np.array, day_end:np.array, recovery:np.array, retreat:np.array, erosion:np.array) -> pd.DataFrame:
+    '''
+
+    '''
+    # track shoreline position before and after storm 
+    time_value = np.empty(2*len(day_start), dtype=float)
+    time_value[0::2] = day_start
+    time_value[1::2] = day_end
+
+    shoreline_track = pd.DataFrame({
+        'day': time_value
+    })
+
+    x0 = 0
+    shoreline_change = np.empty(2*len(day_end))
+    shoreline_change[0::2] = recovery - retreat
+    shoreline_change[1::2] = - erosion
+
+    shoreline_position = x0 + shoreline_change.cumsum()
+
+    return [time_value, shoreline_change, shoreline_position] 
+
+
 def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: datetime) -> np.array:
     '''
     Function to calculate annual statistics of shoreline position based on the passed kind
@@ -74,6 +117,27 @@ def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: 
         raise ValueError('Invalid kind parameter. Please choose "mean", "min", or "max" as the kind parameter.')
 
     return shoreline_track[['year', 'shoreline_position']].groupby('year').agg(kind).values
+
+
+def vector_get_annual_statistics(track_time: np.array, shoreline_position: np.array, kind: str, date_start: datetime) -> np.array:
+    '''
+    Function to calculate annual statistics of shoreline position based on the passed kind
+    :param shoreline_track: DataFrame which consist of shoreline position on a simulation 
+    :param kind: string of the kind of statistics. Available statistics are 'min', 'max', 'mean'
+    :return : an array of chosen statistics on each year of simulation 
+    '''
+    # get an alias 
+    track = pd.DataFrame({
+        'year': pd.Series(helper.date_add_days(date_start, track_time)).dt.year, 
+        'shoreline_position': shoreline_position
+    })
+    
+    valid_kinds = ['min', 'max', 'mean']
+
+    if kind not in valid_kinds: 
+        raise ValueError('Invalid kind parameter. Please choose "mean", "min", or "max" as the kind parameter.')
+
+    return track[['year', 'shoreline_position']].groupby('year').agg(kind).values
 
 
 def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime, date_end: datetime, nr_simulation: int, nr_batch: int, stat_kind: str, rec_rate, max_dur) -> pd.DataFrame: 
