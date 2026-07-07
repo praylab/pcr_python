@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import scipy.io 
 import pandas as pd
+import xarray as xr
 
 def datenum_to_datetime_one(o, f, e=366) -> datetime:
     '''
@@ -115,3 +116,17 @@ def interp_nan_array(y:np.array):
     y[nans] = np.interp(x(nans), x(~nans), y[~nans])
 
     return y 
+
+
+def era5_input(ds: xr.Dataset,):
+    """
+    Extract time series from xarray dataset at point location 
+    """
+    # extract variables
+    hs = ds['swh'].values
+    dir = ds['mwd'].values
+    tp = ds['mwp'].values
+
+    # extract time using helper to convert to matlab datenum
+    time = datetime64_to_datenum(pd.Series(ds['valid_time'].values))
+    return hs, dir, tp, time
