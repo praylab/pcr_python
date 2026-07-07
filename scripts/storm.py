@@ -442,6 +442,94 @@ def monthly_count(storms:pd.DataFrame) -> pd.DataFrame:
 
     return count_df
 
+
+def simulate_nhpp_thinning(T, monthly_lambda, date_start):
+    """
+    Simulate a Non-Homogeneous Poisson Process on [0, T]
+    using the thinning method.
+
+    Inputs:
+        T           : final time
+        lams        : array of λ(t) giving the rate at time t
+        date_start  : day the simulation starts (numpy datetime64)
+
+    Output:
+        arrivals    : numpy array of arrival times in [0, T]
+    """
+
+    lambda_max = monthly_lambda.max()  
+    t = 0.0
+    arrivals = []
+
+    while True:
+        # Step 1: propose next arrival in Poisson(λ_max)
+        # Gap ~ Exponential(λ_max)
+        gap = np.random.exponential(1.0 / lambda_max) * 365.25  # convert to days
+        t = t + gap
+        if t > T:
+            break
+
+        # Step 2: accept with probability λ(t) / λ_max
+        u = np.random.uniform(0.0, 1.0)
+        if u <= get_lambda(t, monthly_lambda, date_start) / lambda_max:
+            arrivals.append(t)
+
+    return np.array(arrivals)
+
+
+def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0):
+    '''
+    Return to arrival (start) of an event after a the end of the event (gap)
+    The function simulate process within T
+    
+    :param T: time horizon in days 
+    :param monthly_lambda: array of event intensity for each month (size of 12)
+    :param date_start: datetime of the start of the simulation
+    :param duration: an array-like of duration samples
+    :return: array of start of each storm 
+    '''
+    # try another way to simulate the storm start times
+    lambda_max = monthly_lambda.max()
+    t = 0
+    arrivals = []
+    counter = 0
+
+    # get the duration 
+    duration = duration[start_storm:]
+
+    while True:
+        # Step 1: propose next arrival in Poisson(λ_max)
+        # Gap ~ Exponential(λ_max)
+        gap = np.random.exponential(1.0 / lambda_max) * 365.25  # convert to days
+        t += gap
+        if t > T:
+            break
+
+        # Step 2: accept with probability λ(t) / λ_max
+        u = np.random.uniform(0.0, 1.0)
+        if u <= get_lambda(t, monthly_lambda, date_start) / lambda_max:
+            arrivals.append(t)
+            t += duration[counter] / 24
+            counter += 1
+    
+    return np.array(arrivals)
+
+
+def get_lambda(day_t, lams, date_start):
+    '''
+    Get the intensity (lambda) for a given time in days.
+    day_t       : float
+    lams        : list or array of float of intensity values for each month (12 values).
+    date_start  : np.datetime64 of the start date corresponding to day_t = 0.
+    Returns the intensity (lambda) for the month corresponding to day_t.
+    '''
+    date_t = date_start + np.timedelta64(int(day_t*24), 'h')
+    
+    month = date_t.item().month
+
+    return lams[month-1]
+
+
 def gev_fit(x: pd.Series) -> list: 
     '''
     Fit storm variable into gev distribution 
