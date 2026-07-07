@@ -44,6 +44,18 @@ def simulate_slr(synthetic_storm: pd.DataFrame, date_start, scenario, wl0) -> pd
 
     # return to series of water level change where on the first day equal to wl0
     return pd.Series(wl0 - slr_values[0] + slr_values)
+
+def vector_simulate_slr(day_start: np.array, date_start, scenario, wl0) -> pd.Series:
+    # calculate days since the refer date (1st of January 2018)
+    if scenario == '0':
+        return np.zeros(len(day_start))
+
+    days = (date_start - datetime(2018, 1, 1)).days + day_start
+
+    slr_values = calculate_slr(days, scenario)
+
+    # return to series of water level change where on the first day equal to wl0
+    return (wl0 - slr_values[0] + slr_values)
     
 
 # TODO: ar6 projection
