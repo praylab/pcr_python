@@ -123,7 +123,7 @@ def merge_dep_storm(dep_storm_nr: np.array, start_indices:np.array, end_indices:
     return start_new, end_new, storm_step_new
 
 
-def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -> pd.DataFrame:
+def generate(fitted_storm: dict, sampling_size:int, oversample:float=0.1, max_dur:float=0) -> pd.DataFrame:
     '''
     generate storm based on fitting 
     '''
@@ -135,30 +135,47 @@ def generate(fitted_storm: list, sampling_size:int, oversample=0.1, max_dur=0) -
     p_tp = fitted_storm['lin_tp']
 
     # sampling
-    sampling_size = int(sampling_size * (1+oversample))
+    sampling_size = int(sampling_size * (1.0+oversample))
 
     # sample Hs and Duration 
-    [sample_hs, sample_dur] = sample_copula_clayton(clayton_copula, pgev_hs, pgev_dur, sampling_size)
+    hs, dur = sample_copula_clayton(clayton_copula, pgev_hs, pgev_dur, sampling_size)
 
     # sample dir from empirical cdf 
-    sample_dir = sample_ecdf(ecdf_dir, sampling_size)
+    dir = sample_ecdf(ecdf_dir, sampling_size)
 
     # sample tp from linear fit 
-    sample_t = f_linear(p_tp, sample_hs)
+    tp = f_linear(p_tp, hs)
+
+    # cast type 
+    hs = hs.astype(np.float32, copy=False)
+    dur = dur.astype(np.float32, copy=False)
+    dir = dir.astype(np.float32, copy=False)
+    tp = tp.astype(np.float32, copy=False)
+
+    # filter max duration 
+    if max_dur > 0:
+        mask = dur < max_dur
+        hs = hs[mask]
+        dur = dur[mask]
+        dir = dir[mask]
+        tp = tp[mask]
 
     # make a dataframe
-    storms_sample = pd.DataFrame({
-        "hs": sample_hs,
-        "duration": sample_dur,
-        "direction": sample_dir,
-        "tp": sample_t
-    }).astype(np.float32)
+    # storms_sample = pd.DataFrame(
+    #     {
+    #         "hs": hs,
+    #         "duration": dur,
+    #         "direction": dir,
+    #         "tp": tp
+    #     }, 
+    #     copy=False
+    # ).astype(np.float32)
 
-    # limit to the max duration 
-    if max_dur != 0: 
-        storms_sample = storms_sample[storms_sample.duration < max_dur].reset_index(drop=True)
+    # # limit to the max duration 
+    # if max_dur != 0: 
+    #     storms_sample = storms_sample[storms_sample.duration < max_dur].reset_index(drop=True)
 
-    return storms_sample
+    return hs, dur, dir, tp
 
 
 # TODO: maybe make the function simple? 
