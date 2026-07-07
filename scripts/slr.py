@@ -29,6 +29,9 @@ def calculate_slr(days_since_2018, scenario, projection='AR5'):
     if projection != 'AR5':
         raise NotImplementedError("Only AR5 projection is implemented.")
     
+    if scenario not in ['RCP26', 'RCP45', 'RCP60', 'RCP85', '0']:
+        raise NotImplementedError("Invalid Scenario, please choose between 'RCP26', 'RCP45', 'RCP60', 'RCP85', '0'")
+    
     a, b = curve_ar5(scenario)
     slr = a * (days_since_2018 ** 2) + b * days_since_2018
     return slr
