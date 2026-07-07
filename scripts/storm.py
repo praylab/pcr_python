@@ -429,17 +429,16 @@ def monthly_count(storms:pd.DataFrame) -> pd.DataFrame:
     Function to count monthly storm from storms DataFrame
     '''
     # get the datetime of storm to gain month 
-    date_storm = helper.datenum_to_datetime(storms['start'])
-    storms['months'] = [dt.month for dt in date_storm]
+    date_df = pd.DataFrame({
+        "date_start": helper.datenum_to_datetime(storms['start'])
+        })
 
     # count monthly storm 
     count_df = pd.DataFrame({
         'months': np.arange(1,13)
     }).set_index('months')
 
-    count_df['count'] = storms[['hs_max', 'months']].groupby('months').count().rename(columns={
-            'hs_max': 'count'
-        })
+    count_df['count'] = date_df['date_start'].groupby(by=date_df['date_start'].dt.month).count()
 
     return count_df
 
