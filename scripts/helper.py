@@ -48,13 +48,13 @@ def datetime_to_datenum(py_dt) -> float:
 
     return ordinal + frac + epoch
 
-def datetime64_to_datenum(array_dt: np.array) -> np.array:
+def datetime64_to_datenum(series_dt: pd.Series) -> np.array:
     '''
-    Convert datetime.datetime object to float of MATLAB datenum representation 
-    :param array_dt: array-like of datetime 
+    Convert pd.Series of datetime64 to MATLAB datenum representation.
+    :param series_dt: pd.Series of datetime64 
     '''
 
-    return np.array([datetime_to_datenum(dt) for _, dt in array_dt.items()])
+    return np.array([datetime_to_datenum(dt) for _, dt in series_dt.items()])
 
 def load_mat_to_df(file_path: str, struct_name: str) -> pd.DataFrame:
     '''
