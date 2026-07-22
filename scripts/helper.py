@@ -118,15 +118,15 @@ def interp_nan_array(y:np.array):
     return y 
 
 
-def era5_input(ds: xr.Dataset,):
+def era5_input(ds: xr.Dataset, keys: dict={'hs':'swh', 'dir':'mwd', 'tp':'mwp', 'time':'valid_time'}):
     """
     Extract time series from xarray dataset at point location 
     """
     # extract variables
-    hs = ds['swh'].values
-    dir = ds['mwd'].values
-    tp = ds['mwp'].values
+    hs = ds[keys['hs']].values
+    dir = ds[keys['dir']].values
+    tp = ds[keys['tp']].values
 
     # extract time using helper to convert to matlab datenum
-    time = datetime64_to_datenum(pd.Series(ds['valid_time'].values))
+    time = datetime64_to_datenum(pd.Series(ds[keys['time']].values))
     return hs, dir, tp, time
