@@ -122,22 +122,37 @@ def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: 
 def vector_get_annual_statistics(track_time: np.array, shoreline_position: np.array, kind: str, date_start: datetime) -> np.array:
     '''
     Function to calculate annual statistics of shoreline position based on the passed kind
-    :param shoreline_track: DataFrame which consist of shoreline position on a simulation 
+    :param shoreline_track: DataFrame which consist of shoreline position on a simulation
     :param kind: string of the kind of statistics. Available statistics are 'min', 'max', 'mean'
-    :return : an array of chosen statistics on each year of simulation 
+    :return : an array of chosen statistics on each year of simulation
     '''
-    # get an alias 
-    track = pd.DataFrame({
-        'year': pd.Series(helper.date_add_days(date_start, track_time)).dt.year, 
-        'shoreline_position': shoreline_position
-    })
-    
     valid_kinds = ['min', 'max', 'mean']
 
-    if kind not in valid_kinds: 
+    if kind not in valid_kinds:
         raise ValueError('Invalid kind parameter. Please choose "mean", "min", or "max" as the kind parameter.')
 
-    return track[['year', 'shoreline_position']].groupby('year').agg(kind).values
+    # track_time is chronological (storms are generated in time order), so the
+    # corresponding calendar years form sorted runs -> reduce per-year with
+    # np.ufunc.reduceat instead of building a DataFrame + pandas groupby per
+    # simulation, which dominated runtime at scale.
+    dates = helper.date_add_days(date_start, track_time)
+    years = dates.astype('datetime64[Y]').astype(int) + 1970
+
+    is_new_year = np.empty(len(years), dtype=bool)
+    is_new_year[0] = True
+    is_new_year[1:] = years[1:] != years[:-1]
+    year_starts = np.flatnonzero(is_new_year)
+
+    if kind == 'min':
+        result = np.minimum.reduceat(shoreline_position, year_starts)
+    elif kind == 'max':
+        result = np.maximum.reduceat(shoreline_position, year_starts)
+    else:  # mean
+        sums = np.add.reduceat(shoreline_position, year_starts)
+        counts = np.diff(np.append(year_starts, len(years)))
+        result = sums / counts
+
+    return result.reshape(-1, 1)
 
 
 def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime, date_end: datetime, nr_simulation: int, nr_batch: int, stat_kind: str, rec_rate, max_dur) -> pd.DataFrame: 

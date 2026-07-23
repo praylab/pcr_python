@@ -100,8 +100,17 @@ def calculate_days_since_2018(date: datetime) -> int:
     '''
     return (calculate_days_since_date(date, date_ref=datetime(2018,1,1)))
 
-def date_add_days(date_ref: datetime, days: np.array) -> list:
-    return [date_ref + timedelta(days=day) for day in days]
+def date_add_days(date_ref: datetime, days: np.array) -> np.ndarray:
+    '''
+    Add an array of (possibly fractional) day offsets to a reference date.
+    Vectorized with numpy datetime64 instead of building one timedelta per element.
+    :param date_ref: datetime or datetime64 reference date
+    :param days: array-like of day offsets
+    :return: np.ndarray of datetime64[s]
+    '''
+    date_ref64 = np.datetime64(date_ref)
+    days = np.asarray(days, dtype=float)
+    return date_ref64 + (days * 86400).astype('int64').astype('timedelta64[s]')
 
 def interp_nan_array(y:np.array):
     '''
