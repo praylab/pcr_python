@@ -38,18 +38,16 @@ def calculate_slr_retreat(storms: pd.DataFrame, m: float) -> pd.Series:
     return pd.Series(retreat)
 
 
-def vector_calculate_slr_retreat(slrs: np.array, m: float) -> pd.Series: 
+def vector_calculate_slr_retreat(slrs: np.array, m: float) -> pd.Series:
     '''
     Function to calculate shoreline retreat for a simulation of storms
     :param : storms a DataFrame which has sea level rise column
     :return : a series of shoreline retreat due to SLR
     '''
-    wl1 = slrs[:-1]
-    wl2 = slrs[1:]
-    retreat = [calculate_inundation(wl1, wl2, m) for wl1, wl2 in zip(wl1, wl2)]
-
-    retreat.insert(0,0)
-    return np.array(retreat)
+    retreat = np.empty(len(slrs))
+    retreat[0] = 0
+    retreat[1:] = calculate_inundation(slrs[:-1], slrs[1:], m)
+    return retreat
 
 
 def track_shoreline(storms: pd.DataFrame) -> pd.DataFrame:
@@ -80,7 +78,7 @@ def vector_track_shoreline(day_start:np.array, day_end:np.array, recovery:np.arr
     '''
 
     '''
-    # track shoreline position before and after storm 
+    # track shoreline position before and after storm
     time_value = np.empty(2*len(day_start), dtype=float)
     time_value[0::2] = day_start
     time_value[1::2] = day_end
