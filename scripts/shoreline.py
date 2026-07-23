@@ -85,10 +85,6 @@ def vector_track_shoreline(day_start:np.array, day_end:np.array, recovery:np.arr
     time_value[0::2] = day_start
     time_value[1::2] = day_end
 
-    shoreline_track = pd.DataFrame({
-        'day': time_value
-    })
-
     x0 = 0
     shoreline_change = np.empty(2*len(day_end))
     shoreline_change[0::2] = recovery - retreat
