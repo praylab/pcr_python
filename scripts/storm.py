@@ -506,7 +506,6 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
         batch of simulations) to avoid recomputing it on every call.
     :return: array of start of each storm
     '''
-    # try another way to simulate the storm start times
     lambda_max = monthly_lambda.max()
 
     if day_to_month is None:
@@ -516,24 +515,44 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
     arrivals = []
     counter = 0
 
-    # get the duration 
+    # get the duration
     duration = duration[start_storm:]
 
+    # draw proposal gaps/uniforms in batches instead of one numpy call per iteration:
+    # gaps are i.i.d. Exponential(lambda_max) regardless of history (memoryless), so
+    # pre-generating them is statistically equivalent to drawing one at a time.
+    mean_gap_days = 365.25 / lambda_max
+    batch_size = int(T / mean_gap_days * 1.5) + 64
+    gaps = np.random.exponential(1.0 / lambda_max, size=batch_size) * 365.25
+    uniforms = np.random.uniform(0.0, 1.0, size=batch_size)
+    idx = 0
+    n_days = len(day_to_month) - 1
+
     while True:
+        if idx >= batch_size:
+            # pre-generated batch exhausted (rare): draw a fresh one
+            gaps = np.random.exponential(1.0 / lambda_max, size=batch_size) * 365.25
+            uniforms = np.random.uniform(0.0, 1.0, size=batch_size)
+            idx = 0
+
         # Step 1: propose next arrival in Poisson(λ_max)
         # Gap ~ Exponential(λ_max)
-        gap = np.random.exponential(1.0 / lambda_max) * 365.25  # convert to days
-        t += gap
+        t += gaps[idx]
         if t > T:
             break
 
         # Step 2: accept with probability λ(t) / λ_max
-        u = np.random.uniform(0.0, 1.0)
-        if u <= get_lambda(t, monthly_lambda, date_start) / lambda_max:
+        u = uniforms[idx]
+        idx += 1
+
+        day_idx = int(t) if int(t) <= n_days else n_days
+        month = day_to_month[day_idx]
+
+        if u <= monthly_lambda[month - 1] / lambda_max:
             arrivals.append(t)
             t += duration[counter] / 24
             counter += 1
-    
+
     return np.array(arrivals)
 
 
