@@ -477,20 +477,42 @@ def simulate_nhpp_thinning(T, monthly_lambda, date_start):
     return np.array(arrivals)
 
 
-def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0):
+def build_day_to_month(date_start: np.datetime64, T: int) -> np.array:
+    '''
+    Precompute the month (1-12) for every integer day offset in [0, T] from date_start.
+    Vectorized replacement for converting each proposed day into a Python datetime
+    (via get_lambda) inside the NHPP thinning loop.
+
+    :param date_start: datetime64 of the start of the simulation
+    :param T: time horizon in days
+    :return: array of shape (T+2,) with the month (1-12) of each day offset
+    '''
+    days = np.arange(0, int(T) + 2)
+    dates = np.datetime64(date_start, 'D') + days.astype('timedelta64[D]')
+    return (dates.astype('datetime64[M]').astype(int) % 12 + 1)
+
+
+def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0, day_to_month: np.array = None):
     '''
     Return to arrival (start) of an event after a the end of the event (gap)
     The function simulate process within T
-    
-    :param T: time horizon in days 
+
+    :param T: time horizon in days
     :param monthly_lambda: array of event intensity for each month (size of 12)
     :param date_start: datetime of the start of the simulation
     :param duration: an array-like of duration samples
-    :return: array of start of each storm 
+    :param day_to_month: optional precomputed output of build_day_to_month(date_start, T).
+        Pass this in when calling repeatedly with the same date_start/T (e.g. once per
+        batch of simulations) to avoid recomputing it on every call.
+    :return: array of start of each storm
     '''
     # try another way to simulate the storm start times
     lambda_max = monthly_lambda.max()
-    t = 0
+
+    if day_to_month is None:
+        day_to_month = build_day_to_month(date_start, T)
+
+    t = 0.0
     arrivals = []
     counter = 0
 
