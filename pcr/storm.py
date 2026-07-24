@@ -178,7 +178,7 @@ def generate(fitted_storm: dict, sampling_size:int, oversample:float=0.1, max_du
     return hs, dur, dir, tp
 
 
-# TODO: maybe make the function simple? 
+# legacy
 def generate_monsoon_ts(date_start: datetime, date_end: datetime, storms_sample: pd.DataFrame, fitted_gap: pd.DataFrame, start_storm: int = 0) -> pd.DataFrame: 
     '''
     Function to generate one simulation from date_start to date_end 

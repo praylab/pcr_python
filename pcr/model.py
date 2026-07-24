@@ -40,6 +40,7 @@ class PCRModel:
         ts_dur: float = 12.0,
         ts_between: float = 48.0,
         # wave data
+        # TODO: separate the pre-process data with the model -> write in io
         lon: float = 82,
         lat: float = 7.5,
         wave_data_path: str = './data/ERA5/B3_offshore.nc',
