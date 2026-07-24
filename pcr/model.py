@@ -44,6 +44,8 @@ class PCRModel:
         lat: float = 7.5,
         wave_data_path: str = './data/ERA5/B3_offshore.nc',
         data_mapper: dict = None,
+        # post-process
+        statistics_kind: str = 'min'
     ):
         self.date_start = date_start
         self.date_end = date_end
@@ -73,6 +75,8 @@ class PCRModel:
         self.wave_data_path = wave_data_path
         self.data_mapper = data_mapper or {'hs': 'swh', 'dir': 'mwd', 'tp': 'mwp', 'time': 'time'}
 
+        self.statistics_kind = statistics_kind
+
         # populated by the stage methods below
         self.rate_ar6 = None
         self.days_ar6 = None
@@ -93,6 +97,10 @@ class PCRModel:
         self.day_to_month = None
 
         self.shoreline_stats = None
+        # each simulation yields a variable-length array (2 entries per storm event),
+        # so these hold one array object per simulation rather than a fixed-width array
+        self.track_time = [None] * nr_simulation
+        self.track_shoreline = [None] * nr_simulation
 
     def init_slr(self):
         '''Import the AR6 sea level rate curve at (lon_sl, lat_sl).'''
@@ -140,6 +148,17 @@ class PCRModel:
         self.shoreline_stats = np.empty((self.t_years + 1, self.nr_simulation))
 
         return self.shoreline_stats
+
+    def compute_statistics(self, nr_sim):
+        '''compute annual statistics'''
+        row = shoreline.vector_get_annual_statistics(
+                track_time=self.track_time[nr_sim],
+                shoreline_position=self.track_shoreline[nr_sim],
+                kind=self.statistics_kind,
+                date_start=self.date_start,
+            )
+
+        return row
 
     def _generate_batch(self):
         '''Sample a batch of synthetic storms sized for the full simulation horizon.'''
@@ -196,7 +215,7 @@ class PCRModel:
             m=self.m,
         )
 
-        track_time, track_shoreline_change, track_shoreline_position = shoreline.vector_track_shoreline(
+        track_time, _, track_shoreline_position = shoreline.vector_track_shoreline(
             day_start=synth_start,
             day_end=synth_end,
             recovery=synth_recovery,
@@ -204,14 +223,7 @@ class PCRModel:
             erosion=synth_erosion,
         )
 
-        row = shoreline.vector_get_annual_statistics(
-            track_time=track_time,
-            shoreline_position=track_shoreline_position,
-            kind='min',
-            date_start=self.date_start,
-        )
-
-        return row, storm_count_end
+        return track_time, track_shoreline_position, storm_count_end
 
     def run(self):
         '''Run the full pipeline: SLR curve, wave data, storm detection, then batched simulation.'''
@@ -236,7 +248,9 @@ class PCRModel:
 
             print(f'progress: {sim_count / self.nr_simulation * 100:.2f} %')
             for _ in range(self.nr_batch):
-                row, storm_count = self._simulate_one(hss, durs, dirs, tps, storm_count)
+                self.track_time[sim_count], self.track_shoreline[sim_count], storm_count = self._simulate_one(hss, durs, dirs, tps, storm_count)
+
+                row = self.compute_statistics(sim_count)
 
                 try:
                     self.shoreline_stats[:, sim_count] = row.flatten()
