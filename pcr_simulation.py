@@ -21,6 +21,13 @@ print('Calculating Sea Level Rise ...')
 # SLR scenario TODO: option to change projection (e.g., ar5 or ar6)
 scenario = 'RCP85'
 wl0 = 0.0 # initial water level
+# AR6 curve 
+ar6_scenario = '0'
+# TODO geo
+lon_sl = 82
+lat_sl = 7.5
+rate_ar6, days_ar6 = slr.import_ar6_curve(ar6_scenario, lon_sl, lat_sl, date_start=date_start)
+
 # days_since_2018_start = (date_start - np.datetime64('2018-01-01')).astype(int)
 # slr_start = slr.calculate_slr(days_since_2018_start, scenario)
 # wl0 += slr_start # initial water level including SLR at start date
@@ -120,11 +127,18 @@ while sim_count < nr_simulation:
 		storm_count = storm_count_end
 		
 		# calculate slr on every storm start 
-		synth_slr = slr.vector_simulate_slr(
+		# synth_slr = slr.vector_simulate_slr(
+		# 	day_start=synth_start, 
+		# 	date_start=date_start, 
+		# 	scenario=scenario, 
+		# 	wl0=wl0
+		# )
+		synth_slr = slr.vector_simulate_slrAR6(
 			day_start=synth_start, 
-			date_start=date_start, 
-			scenario=scenario, 
-			wl0=wl0
+			rate_sl = rate_ar6, 
+			day_sl=days_ar6, 
+			wl0=wl0, 
+			scenario=ar6_scenario
 		)
 
 		# calculate erosion 

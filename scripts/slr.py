@@ -1,6 +1,13 @@
+import os 
+
 import numpy as np
 import pandas as pd
+import xarray as xr 
+
 from datetime import datetime
+from scipy.integrate import cumulative_trapezoid
+
+from scripts import geo
 
 def curve_ar5(scenario):
     '''
@@ -62,6 +69,39 @@ def vector_simulate_slr(day_start: np.array, date_start, scenario, wl0) -> pd.Se
     
 
 # TODO: ar6 projection
+def import_ar6_curve(scenario: str, lon: float, lat: float, quantile:float=0.5, date_start:np.datetime64=None) -> list:
+    '''
+    import IPCC AR6 sea level change rate curve, return to list of rates and years if date_start is not provided else to days since date_start
+    '''
+    dir = './data/AR6_slr'
+    filename = f'total_{scenario}_medium_confidence_rates.nc'
+    ds = xr.open_dataset(os.path.join(dir,filename))
+
+    # find the closest point 
+    idx = geo.find_closest(lon, lat, ds.lon, ds.lat, 'locations')
+    point = ds.isel(locations=idx)
+
+    # extract the curve 
+    rates = point.sel(quantiles=quantile).sea_level_change_rate.values / 1000  # in meter / year
+    years = point.years.values
+
+    # convert if applicable
+    if date_start:
+        year_start = (years - 1970).astype('datetime64[Y]')
+        days = (year_start - date_start).astype('timedelta64[D]').astype(int)
+
+        return rates/365.25, days
+    else: 
+        return rates, years
+
+def vector_simulate_slrAR6(day_start: np.array, rate_sl: np.array, day_sl: np.array, wl0: float, scenario: str):
+    if scenario == '0': 
+        return np.zeros(len(day_start))
+    
+    rate_sim = np.interp(day_start, day_sl, rate_sl)
+    wls = cumulative_trapezoid(rate_sim, x=day_start, initial=wl0)
+
+    return wls
 
 # test out the function
 if __name__ == "__main__": # this only runs when this script is executed directly
