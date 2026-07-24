@@ -2,7 +2,7 @@ import numpy as np
 
 from dotenv import load_dotenv
 
-from scripts.model import PCRModel
+from pcr.model import PCRModel
 
 load_dotenv()
 

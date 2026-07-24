@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from datetime import datetime
-from scripts import erosion, shoreline
+from pcr import erosion, shoreline
 
 # import storm
 data_dict = mat73.loadmat('data/test/diagnostic_storm.mat')

@@ -7,7 +7,7 @@ import xarray as xr
 from datetime import datetime
 from scipy.integrate import cumulative_trapezoid
 
-from scripts import geo
+from pcr import geo
 
 def curve_ar5(scenario):
     '''

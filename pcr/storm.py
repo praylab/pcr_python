@@ -4,7 +4,7 @@ import scipy.signal as signal
 
 from datetime import datetime
 from scipy import stats
-from scripts import helper
+from pcr import helper
 from copulas.bivariate import Clayton
 
 def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:float, ts_dur:float, ts_between:float=0) -> pd.DataFrame:
