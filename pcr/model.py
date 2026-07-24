@@ -225,23 +225,12 @@ class PCRModel:
 
         return track_time, track_shoreline_position, storm_count_end
 
-    def run(self):
-        '''Run the full pipeline: SLR curve, wave data, storm detection, then batched simulation.'''
-        t0 = time.time()
-
-        print('Calculating Sea Level Rise ...')
-        self.init_slr()
-
-        print('Retrieve wave data ...')
-        self.load_wave_data()
-
-        print('Detecting storms ...')
-        self.detect_storms()
-
-        print('Starting the simulation ...')
+    def run_simulation(self):
+        '''Run the batched Monte-Carlo simulation stage (assumes init_slr/load_wave_data/detect_storms already ran).'''
         self.prepare_simulation()
 
         sim_count = 0
+        error_count = 0
         while sim_count < self.nr_simulation:
             hss, durs, dirs, tps = self._generate_batch()
             storm_count = 0
@@ -256,10 +245,29 @@ class PCRModel:
                     self.shoreline_stats[:, sim_count] = row.flatten()
                 except ValueError:
                     sim_count -= 1
+                    error_count += 1
 
                 sim_count += 1
                 if sim_count >= self.nr_simulation:
                     break
 
-        print(f'running for {time.time() - t0:2f} s')
         return self.shoreline_stats
+
+    def run(self):
+        '''Run the full pipeline: SLR curve, wave data, storm detection, then batched simulation.'''
+        t0 = time.time()
+
+        print('Calculating Sea Level Rise ...')
+        self.init_slr()
+
+        print('Retrieve wave data ...')
+        self.load_wave_data()
+
+        print('Detecting storms ...')
+        self.detect_storms()
+
+        print('Starting the simulation ...')
+        self.run_simulation()
+
+        print(f'running for {time.time() - t0:2f} s')
+        # return self.shoreline_stats, error_count
