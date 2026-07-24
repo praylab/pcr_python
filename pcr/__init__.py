@@ -1,1 +1,1 @@
-# file to enable scripts as a package
+# file to enable pcr as a package
