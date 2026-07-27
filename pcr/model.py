@@ -89,7 +89,7 @@ class PCRModel:
         self.day = None
 
         self.detected_storm = None
-        self.fitted_storm = None
+        self.storm_props = None
         self.fitted_lambdas = None
         self.yearly_storm = None
 
@@ -127,7 +127,7 @@ class PCRModel:
         self.detected_storm, _ = storm.detect(
             self.hs, self.dir, self.tp, self.day, self.ts_hs, self.ts_dur, self.ts_between
         )
-        self.fitted_storm = storm.fit_storm(self.detected_storm)
+        self.storm_props = storm.fit_storm(self.detected_storm)
         self.fitted_lambdas = storm.fit_lambda_gap(self.detected_storm)
 
         time_var = self.data_mapper['time']
@@ -136,7 +136,7 @@ class PCRModel:
         ).values
         self.yearly_storm = np.ceil(self.detected_storm.shape[0] / record_years)
 
-        return self.detected_storm, self.fitted_storm, self.fitted_lambdas
+        return self.detected_storm, self.storm_props, self.fitted_lambdas
 
     def prepare_simulation(self):
         '''Precompute simulation horizon, day-to-month mapping, and the result array.'''
@@ -165,7 +165,7 @@ class PCRModel:
         '''Sample a batch of synthetic storms sized for the full simulation horizon.'''
         n_sample = self.yearly_storm * self.t_years * self.nr_batch
         return storm.generate(
-            fitted_storm=self.fitted_storm,
+            fitted_storm=self.storm_props,
             sampling_size=n_sample,
             oversample=0.1,
             max_dur=np.max(self.detected_storm.duration),
