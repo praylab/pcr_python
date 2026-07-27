@@ -47,7 +47,9 @@ class PCRModel:
         wave_data_path: str = './data/ERA5/B3_offshore.nc',
         data_mapper: dict = None,
         # post-process
-        statistics_kind: str = 'min'
+        statistics_kind: str = 'min',
+        # future condition 
+        fac_lambda: np.array = np.array([[2015, 2100], [1, 1]])
     ):
         self.date_start = np.datetime64(f'{year_start}-01-01T00:00:00')
         self.date_end = np.datetime64(f'{year_end}-12-31T23:59:00')
@@ -79,6 +81,8 @@ class PCRModel:
         self.data_mapper = data_mapper or {'hs': 'swh', 'dir': 'mwd', 'tp': 'mwp', 'time': 'time'}
 
         self.statistics_kind = statistics_kind
+
+        self.fac_lambda = fac_lambda
 
         # populated by the stage methods below
         self.rate_ar6 = None
@@ -183,7 +187,8 @@ class PCRModel:
             duration=durs,
             start_storm=storm_count,
             day_to_month=self.day_to_month,
-            day_to_year=self.day_to_year
+            day_to_year=self.day_to_year, 
+            fac_lambda=self.fac_lambda
         )
 
         storm_count_end = storm_count + len(synth_start)
