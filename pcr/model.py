@@ -184,13 +184,9 @@ class PCRModel:
 
         storm_count_end = storm_count + len(synth_start)
 
-        synth_hs = hss[storm_count:storm_count_end]
-        synth_direction = dirs[storm_count:storm_count_end]
-        synth_duration = durs[storm_count:storm_count_end]
-        synth_tp = tps[storm_count:storm_count_end]
-        synth_end = synth_start + (synth_duration / 24)
-        synth_gap = synth_start - np.roll(synth_end, 1)
-        synth_gap[0] = 0.0
+        synth_hs, synth_direction, synth_duration, synth_tp, synth_end, synth_gap = storm.slice_synthetic_batch(
+            hss, dirs, durs, tps, synth_start, storm_count, storm_count_end
+        )
 
         synth_slr = slr.vector_simulate_slrAR6(
             day_start=synth_start,

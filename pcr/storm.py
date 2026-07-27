@@ -556,6 +556,28 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
     return np.array(arrivals)
 
 
+def slice_synthetic_batch(hss: np.array, dirs: np.array, durs: np.array, tps: np.array, synth_start: np.array, storm_count: int, storm_count_end: int):
+    '''
+    Slice the sampled batch arrays (hss, dirs, durs, tps) to the storms used by one
+    simulation, and derive each storm's end time and gap from the previous storm's end.
+
+    :param hss, dirs, durs, tps: full batch arrays produced by generate()
+    :param synth_start: array of storm start times (days) for this simulation, from gap_nhpp_thinning()
+    :param storm_count: index into the batch arrays where this simulation's storms begin
+    :param storm_count_end: index into the batch arrays where this simulation's storms end
+    :return: synth_hs, synth_direction, synth_duration, synth_tp, synth_end, synth_gap
+    '''
+    synth_hs = hss[storm_count:storm_count_end]
+    synth_direction = dirs[storm_count:storm_count_end]
+    synth_duration = durs[storm_count:storm_count_end]
+    synth_tp = tps[storm_count:storm_count_end]
+    synth_end = synth_start + (synth_duration / 24)
+    synth_gap = synth_start - np.roll(synth_end, 1)
+    synth_gap[0] = 0.0
+
+    return synth_hs, synth_direction, synth_duration, synth_tp, synth_end, synth_gap
+
+
 def get_lambda(day_t, lams, date_start):
     '''
     Get the intensity (lambda) for a given time in days.
