@@ -477,7 +477,7 @@ def simulate_nhpp_thinning(T, monthly_lambda, date_start):
     return np.array(arrivals)
 
 
-def build_day_to_month(date_start: np.datetime64, T: int) -> np.array:
+def build_day_to_month_year(date_start: np.datetime64, T: int) -> np.array:
     '''
     Precompute the month (1-12) for every integer day offset in [0, T] from date_start.
     Vectorized replacement for converting each proposed day into a Python datetime
@@ -489,10 +489,12 @@ def build_day_to_month(date_start: np.datetime64, T: int) -> np.array:
     '''
     days = np.arange(0, int(T) + 2)
     dates = np.datetime64(date_start, 'D') + days.astype('timedelta64[D]')
-    return (dates.astype('datetime64[M]').astype(int) % 12 + 1)
+    months = (dates.astype('datetime64[M]').astype(int) % 12 + 1)
+    years = (dates.astype('datetime64[Y]')).astype(int) + 1970
+    return months, years
 
 
-def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0, day_to_month: np.array = None):
+def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0, day_to_month: np.array = None, day_to_year: np.array = None, fac_lambda: np.array = np.array([[2015, 2100], [1, 1]])):
     '''
     Return to arrival (start) of an event after a the end of the event (gap)
     The function simulate process within T
@@ -509,7 +511,7 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
     lambda_max = monthly_lambda.max()
 
     if day_to_month is None:
-        day_to_month = build_day_to_month(date_start, T)
+        day_to_month, day_to_year = build_day_to_month_year(date_start, T)
 
     t = 0.0
     arrivals = []
@@ -548,7 +550,11 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
         day_idx = int(t) if int(t) <= n_days else n_days
         month = day_to_month[day_idx]
 
-        if u <= monthly_lambda[month - 1] / lambda_max:
+        # get lambda factor
+        year = day_to_year[day_idx]
+        fac = np.interp(year, fac_lambda[0], fac_lambda[1])
+
+        if u <= fac * monthly_lambda[month - 1] / lambda_max:
             arrivals.append(t)
             t += duration[counter] / 24
             counter += 1

@@ -96,6 +96,7 @@ class PCRModel:
         self.t_days = None
         self.t_years = None
         self.day_to_month = None
+        self.day_to_year = None
 
         self.shoreline_stats = None
         # each simulation yields a variable-length array (2 entries per storm event),
@@ -145,7 +146,7 @@ class PCRModel:
             self.date_end.astype('datetime64[Y]') - self.date_start.astype('datetime64[Y]')
         ).astype(int)
 
-        self.day_to_month = storm.build_day_to_month(self.date_start, self.t_days)
+        self.day_to_month, self.day_to_year = storm.build_day_to_month_year(self.date_start, self.t_days)
         self.shoreline_stats = np.empty((self.t_years + 1, self.nr_simulation))
 
         return self.shoreline_stats
@@ -180,6 +181,7 @@ class PCRModel:
             duration=durs,
             start_storm=storm_count,
             day_to_month=self.day_to_month,
+            day_to_year=self.day_to_year
         )
 
         storm_count_end = storm_count + len(synth_start)
