@@ -24,6 +24,7 @@ class PCRModel:
         nr_batch: int = 1000,
         # SLR
         scenario: str = 'ssp126',
+        slr_data_path: str = '.data/AR6_slr',
         wl0: float = 0.0,
         lon_sl: float = 82,
         lat_sl: float = 7.5,
@@ -54,6 +55,7 @@ class PCRModel:
         self.nr_batch = nr_batch
 
         self.scenario = scenario
+        self.slr_data_path = slr_data_path
         self.wl0 = wl0
         self.ar6_scenario = scenario
         self.lon_sl = lon_sl
@@ -108,7 +110,7 @@ class PCRModel:
         '''Import the AR6 sea level rate curve at (lon_sl, lat_sl).'''
         if self.ar6_scenario != '0':
             self.rate_ar6, self.days_ar6 = slr.import_ar6_curve(
-                self.ar6_scenario, self.lon_sl, self.lat_sl, date_start=self.date_start
+                self.ar6_scenario, self.lon_sl, self.lat_sl, date_start=self.date_start, dir=self.slr_data_path
             )
         else: 
             self.rate_ar6, self.days_ar6 = np.zeros(10), np.zeros(10)

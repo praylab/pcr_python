@@ -68,11 +68,10 @@ def vector_simulate_slr(day_start: np.array, date_start, scenario, wl0) -> pd.Se
     return (wl0 - slr_values[0] + slr_values)
     
 
-def import_ar6_curve(scenario: str, lon: float, lat: float, quantile:float=0.5, date_start:np.datetime64=None) -> list:
+def import_ar6_curve(scenario: str, lon: float, lat: float, quantile:float=0.5, date_start:np.datetime64=None, dir: str = './data/AR6_slr') -> list:
     '''
     import IPCC AR6 sea level change rate curve, return to list of rates and years if date_start is not provided else to days since date_start
     '''
-    dir = './data/AR6_slr'
     filename = f'total_{scenario}_medium_confidence_rates.nc'
     ds = xr.open_dataset(os.path.join(dir,filename))
 
