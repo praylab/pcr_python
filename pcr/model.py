@@ -18,8 +18,8 @@ class PCRModel:
 
     def __init__(
         self,
-        date_start: np.datetime64,
-        date_end: np.datetime64,
+        year_start: str,
+        year_end: str,
         nr_simulation: int = 1000,
         nr_batch: int = 1000,
         # SLR
@@ -48,8 +48,8 @@ class PCRModel:
         # post-process
         statistics_kind: str = 'min'
     ):
-        self.date_start = date_start
-        self.date_end = date_end
+        self.date_start = np.datetime64(f'{year_start}-01-01T00:00:00')
+        self.date_end = np.datetime64(f'{year_end}-12-31T23:59:00')
         self.nr_simulation = nr_simulation
         self.nr_batch = nr_batch
 
