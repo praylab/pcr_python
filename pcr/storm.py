@@ -391,8 +391,8 @@ def fit_lambda_gap(storms:pd.DataFrame, fillna:str=None) -> list:
     # create copy of detected storm to avoid modifying original data
     storms = storms[['duration', 'start']].copy()
     storms['date_start'] = helper.datenum_to_datetime(storms['start'])
-    # Assuming the storm record covering the whole year 
-    n_year = storms['date_start'].dt.year.max() - storms['date_start'].dt.year.min() + 1
+    # TODO: might be wrong? if the entry is not covering the whole year. Additionally is it should be +1? 
+    n_year = storms['date_start'].dt.year.max() - storms['date_start'].dt.year.min() 
 
     # get the monthly total duration of storm (in hours)
     count_df['sum_dur'] = storms.groupby(by=storms['date_start'].dt.month)['duration'].sum() # in hours 
@@ -554,28 +554,6 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
             counter += 1
 
     return np.array(arrivals)
-
-
-def slice_synthetic_batch(hss: np.array, dirs: np.array, durs: np.array, tps: np.array, synth_start: np.array, storm_count: int, storm_count_end: int):
-    '''
-    Slice the sampled batch arrays (hss, dirs, durs, tps) to the storms used by one
-    simulation, and derive each storm's end time and gap from the previous storm's end.
-
-    :param hss, dirs, durs, tps: full batch arrays produced by generate()
-    :param synth_start: array of storm start times (days) for this simulation, from gap_nhpp_thinning()
-    :param storm_count: index into the batch arrays where this simulation's storms begin
-    :param storm_count_end: index into the batch arrays where this simulation's storms end
-    :return: synth_hs, synth_direction, synth_duration, synth_tp, synth_end, synth_gap
-    '''
-    synth_hs = hss[storm_count:storm_count_end]
-    synth_direction = dirs[storm_count:storm_count_end]
-    synth_duration = durs[storm_count:storm_count_end]
-    synth_tp = tps[storm_count:storm_count_end]
-    synth_end = synth_start + (synth_duration / 24)
-    synth_gap = synth_start - np.roll(synth_end, 1)
-    synth_gap[0] = 0.0
-
-    return synth_hs, synth_direction, synth_duration, synth_tp, synth_end, synth_gap
 
 
 def get_lambda(day_t, lams, date_start):
