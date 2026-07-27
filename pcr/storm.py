@@ -391,8 +391,8 @@ def fit_lambda_gap(storms:pd.DataFrame, fillna:str=None) -> list:
     # create copy of detected storm to avoid modifying original data
     storms = storms[['duration', 'start']].copy()
     storms['date_start'] = helper.datenum_to_datetime(storms['start'])
-    # TODO: might be wrong? if the entry is not covering the whole year. Additionally is it should be +1? 
-    n_year = storms['date_start'].dt.year.max() - storms['date_start'].dt.year.min() 
+    # Assuming the storm record covering the whole year 
+    n_year = storms['date_start'].dt.year.max() - storms['date_start'].dt.year.min() + 1
 
     # get the monthly total duration of storm (in hours)
     count_df['sum_dur'] = storms.groupby(by=storms['date_start'].dt.month)['duration'].sum() # in hours 
