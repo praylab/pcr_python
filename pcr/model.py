@@ -32,7 +32,7 @@ class PCRModel:
         doe: float = 2.5,
         ws: float = 0.04,
         d: float = 2 + 1,
-        rec_rate: float = 7.5851 / 365, # calibrated value
+        rec_rate: float = 7.4119/365, # calibrated value
         m: float = 0.024,
         c1: float = 1.339,
         c2: float = 1.983,
