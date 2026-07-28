@@ -164,6 +164,7 @@ class PCRModel:
                 shoreline_position=self.track_shoreline[nr_sim],
                 kind=self.statistics_kind,
                 date_start=self.date_start,
+                date_end=self.date_end,
             )
 
         return row
@@ -236,7 +237,6 @@ class PCRModel:
         self.prepare_simulation()
 
         sim_count = 0
-        error_count = 0
         while sim_count < self.nr_simulation:
             hss, durs, dirs, tps = self._generate_batch()
             storm_count = 0
@@ -245,19 +245,14 @@ class PCRModel:
             for _ in range(self.nr_batch):
                 self.track_time[sim_count], self.track_shoreline[sim_count], storm_count = self._simulate_one(hss, durs, dirs, tps, storm_count)
 
-                row = self.compute_statistics(sim_count)
-
-                try:
-                    self.shoreline_stats[:, sim_count] = row.flatten()
-                except ValueError:
-                    sim_count -= 1
-                    error_count += 1
+                # row = self.compute_statistics(sim_count)
+                # self.shoreline_stats[:, sim_count] = row.flatten()
 
                 sim_count += 1
                 if sim_count >= self.nr_simulation:
                     break
 
-        return self.shoreline_stats
+        # return self.shoreline_stats
 
     def run(self):
         '''Run the full pipeline: SLR curve, wave data, storm detection, then batched simulation.'''
