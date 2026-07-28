@@ -103,6 +103,7 @@ class PCRModel:
         self.t_years = None
         self.day_to_month = None
         self.day_to_year = None
+        self.day_to_fac = None
 
         self.shoreline_stats = None
         # each simulation yields a variable-length array (2 entries per storm event),
@@ -153,6 +154,10 @@ class PCRModel:
         ).astype(int)
 
         self.day_to_month, self.day_to_year = storm.build_day_to_month_year(self.date_start, self.t_days)
+        # fac_lambda/day_to_year are fixed for the whole run, so interpolate the
+        # lambda-scaling factor once here rather than per proposed storm arrival
+        # inside gap_nhpp_thinning's hot loop
+        self.day_to_fac = np.interp(self.day_to_year, self.fac_lambda[0], self.fac_lambda[1])
         self.shoreline_stats = np.empty((self.t_years + 1, self.nr_simulation))
 
         return self.shoreline_stats
@@ -188,7 +193,8 @@ class PCRModel:
             duration=durs,
             start_storm=storm_count,
             day_to_month=self.day_to_month,
-            day_to_year=self.day_to_year, 
+            day_to_year=self.day_to_year,
+            day_to_fac=self.day_to_fac, 
             fac_lambda=self.fac_lambda
         )
 
@@ -245,8 +251,8 @@ class PCRModel:
             for _ in range(self.nr_batch):
                 self.track_time[sim_count], self.track_shoreline[sim_count], storm_count = self._simulate_one(hss, durs, dirs, tps, storm_count)
 
-                # row = self.compute_statistics(sim_count)
-                # self.shoreline_stats[:, sim_count] = row.flatten()
+                row = self.compute_statistics(sim_count)
+                self.shoreline_stats[:, sim_count] = row.flatten()
 
                 sim_count += 1
                 if sim_count >= self.nr_simulation:

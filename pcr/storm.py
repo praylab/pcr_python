@@ -494,7 +494,7 @@ def build_day_to_month_year(date_start: np.datetime64, T: int) -> np.array:
     return months, years
 
 
-def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0, day_to_month: np.array = None, day_to_year: np.array = None, fac_lambda: np.array = np.array([[2015, 2100], [1, 1]])):
+def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime64, duration: np.array, start_storm: int = 0, day_to_month: np.array = None, day_to_year: np.array = None, fac_lambda: np.array = None, day_to_fac: np.array = None):
     '''
     Return to arrival (start) of an event after a the end of the event (gap)
     The function simulate process within T
@@ -506,12 +506,19 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
     :param day_to_month: optional precomputed output of build_day_to_month(date_start, T).
         Pass this in when calling repeatedly with the same date_start/T (e.g. once per
         batch of simulations) to avoid recomputing it on every call.
+    :param day_to_fac: optional precomputed lambda-scaling-factor lookup, i.e.
+        np.interp(day_to_year, fac_lambda[0], fac_lambda[1]). day_to_year and fac_lambda
+        are fixed for the whole run, so this should be built once outside the simulation
+        loop (mirrors day_to_month) instead of interpolated per proposed arrival.
     :return: array of start of each storm
     '''
     lambda_max = monthly_lambda.max()
 
     if day_to_month is None:
         day_to_month, day_to_year = build_day_to_month_year(date_start, T)
+
+    if day_to_fac is None:
+        day_to_fac = np.interp(day_to_year, fac_lambda[0], fac_lambda[1])
 
     t = 0.0
     arrivals = []
@@ -551,8 +558,7 @@ def gap_nhpp_thinning(T: int, monthly_lambda: np.array, date_start: np.datetime6
         month = day_to_month[day_idx]
 
         # get lambda factor
-        year = day_to_year[day_idx]
-        fac = np.interp(year, fac_lambda[0], fac_lambda[1])
+        fac = day_to_fac[day_idx]
 
         if u <= fac * monthly_lambda[month - 1] / lambda_max:
             arrivals.append(t)
