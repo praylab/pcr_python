@@ -10,11 +10,14 @@ def calculate_recovery(storms: pd.DataFrame, rec_rate: float) -> pd.Series:
     '''
     return storms['gap'] * rec_rate
 
-def vector_calculate_recovery(gaps: np.array, rec_rate: float) -> pd.Series: 
+def vector_calculate_recovery(gaps: np.array, rec_rate: float, fac: np.array = 1.0) -> pd.Series:
     '''
-    Function to calculate shoreline recovery in between two storms 
+    Function to calculate shoreline recovery in between two storms
+    :param fac: optional per-gap scaling factor (scalar or array matching gaps),
+        e.g. a time-varying recovery rate looked up per storm day. Defaults to 1.0
+        (no scaling) for backward compatibility.
     '''
-    return gaps * rec_rate
+    return gaps * rec_rate * fac
 
 
 def calculate_inundation(wl0: float, wl: float, m: float) -> float: 

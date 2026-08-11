@@ -48,8 +48,9 @@ class PCRModel:
         data_mapper: dict = None,
         # post-process
         statistics_kind: str = 'min',
-        # future condition 
-        fac_lambda: np.array = np.array([[2015, 2100], [1, 1]])
+        # future condition
+        fac_lambda: np.array = np.array([[2015, 2100], [1, 1]]),
+        rec_rate_end: float = None
     ):
         self.date_start = np.datetime64(f'{year_start}-01-01T00:00:00')
         self.date_end = np.datetime64(f'{year_end}-12-31T23:59:00')
@@ -83,6 +84,7 @@ class PCRModel:
         self.statistics_kind = statistics_kind
 
         self.fac_lambda = fac_lambda
+        self.rec_rate_end = rec_rate_end
 
         # populated by the stage methods below
         self.rate_ar6 = None
@@ -104,6 +106,7 @@ class PCRModel:
         self.day_to_month = None
         self.day_to_year = None
         self.day_to_fac = None
+        self.day_to_rec_rate = None
 
         self.shoreline_stats = None
         # each simulation yields a variable-length array (2 entries per storm event),
@@ -154,10 +157,18 @@ class PCRModel:
         ).astype(int)
 
         self.day_to_month, self.day_to_year = storm.build_day_to_month_year(self.date_start, self.t_days)
-        # fac_lambda/day_to_year are fixed for the whole run, so interpolate the
+        # fac_lambda and day_to_year are fixed for the whole run, so interpolate the
         # lambda-scaling factor once here rather than per proposed storm arrival
         # inside gap_nhpp_thinning's hot loop
         self.day_to_fac = np.interp(self.day_to_year, self.fac_lambda[0], self.fac_lambda[1])
+
+        # recovery rate ramps linearly from rec_rate (at year_start) to rec_rate_end
+        # (at year_end); if rec_rate_end isn't given, this collapses to the constant
+        # rec_rate everywhere. Built once here as a day-indexed lookup, same pattern
+        # as day_to_fac, rather than interpolated per simulation.
+        end_rate = self.rec_rate if self.rec_rate_end is None else self.rec_rate_end
+        self.day_to_rec_rate = np.interp(self.day_to_year, [self.year_start, self.year_end], [self.rec_rate, end_rate])
+
         self.shoreline_stats = np.empty((self.t_years + 1, self.nr_simulation))
 
         return self.shoreline_stats
@@ -218,9 +229,12 @@ class PCRModel:
             durs=synth_duration,
         )
 
+        # look up each storm's recovery rate for its day in one vectorized indexing
+        # op (day_to_rec_rate is precomputed once in prepare_simulation)
+        day_idx = np.clip(synth_start.astype(int), 0, len(self.day_to_rec_rate) - 1)
         synth_recovery = shoreline.vector_calculate_recovery(
             gaps=synth_gap,
-            rec_rate=self.rec_rate,
+            rec_rate=self.day_to_rec_rate[day_idx],
         )
 
         synth_retreat = shoreline.vector_calculate_slr_retreat(
