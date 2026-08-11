@@ -116,7 +116,7 @@ def get_annual_statistics(shoreline_track: pd.DataFrame, kind: str, date_start: 
     return shoreline_track[['year', 'shoreline_position']].groupby('year').agg(kind).values
 
 
-def vector_get_annual_statistics(track_time: np.array, shoreline_position: np.array, kind: str, date_start: datetime, date_end: datetime) -> np.array:
+def vector_get_annual_statistics(track_time: np.array, shoreline_position: np.array, kind: str, date_start: datetime, date_end: datetime, year_start: int = None, year_end: int = None) -> np.array:
     '''
     Function to calculate annual statistics of shoreline position based on the passed kind
     :param shoreline_track: DataFrame which consist of shoreline position on a simulation
@@ -126,6 +126,11 @@ def vector_get_annual_statistics(track_time: np.array, shoreline_position: np.ar
         full set of years the returned array must cover, so years with no storms are still
         represented (via interpolation) rather than dropped, which would misalign the result
         with the fixed-size (t_years + 1) output array
+    :param year_start: optional precomputed date_start.astype('datetime64[Y]').astype(int) + 1970.
+        date_start/date_end are fixed for the whole run, so callers looping over many
+        simulations (e.g. PCRModel) should compute this once and pass it in here rather
+        than recomputing it on every call.
+    :param year_end: optional precomputed equivalent of year_start for date_end.
     :return : an array of chosen statistics on each year of simulation, one row per calendar
         year from date_start to date_end inclusive
     '''
@@ -134,8 +139,10 @@ def vector_get_annual_statistics(track_time: np.array, shoreline_position: np.ar
     if kind not in valid_kinds:
         raise ValueError('Invalid kind parameter. Please choose "mean", "min", or "max" as the kind parameter.')
 
-    year_start = date_start.astype('datetime64[Y]').astype(int) + 1970
-    year_end = date_end.astype('datetime64[Y]').astype(int) + 1970
+    if year_start is None:
+        year_start = date_start.astype('datetime64[Y]').astype(int) + 1970
+    if year_end is None:
+        year_end = date_end.astype('datetime64[Y]').astype(int) + 1970
     all_years = np.arange(year_start, year_end + 1)
 
     # track_time is chronological (storms are generated in time order), so the

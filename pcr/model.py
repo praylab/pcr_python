@@ -54,6 +54,8 @@ class PCRModel:
     ):
         self.date_start = np.datetime64(f'{year_start}-01-01T00:00:00')
         self.date_end = np.datetime64(f'{year_end}-12-31T23:59:00')
+        self.year_start = int(year_start)
+        self.year_end = int(year_end)
         self.nr_simulation = nr_simulation
         self.nr_batch = nr_batch
 
@@ -152,9 +154,7 @@ class PCRModel:
     def prepare_simulation(self):
         '''Precompute simulation horizon, day-to-month mapping, and the result array.'''
         self.t_days = (self.date_end - self.date_start).item().days
-        self.t_years = (
-            self.date_end.astype('datetime64[Y]') - self.date_start.astype('datetime64[Y]')
-        ).astype(int)
+        self.t_years = self.year_end - self.year_start
 
         self.day_to_month, self.day_to_year = storm.build_day_to_month_year(self.date_start, self.t_days)
         # fac_lambda and day_to_year are fixed for the whole run, so interpolate the
@@ -181,6 +181,8 @@ class PCRModel:
                 kind=self.statistics_kind,
                 date_start=self.date_start,
                 date_end=self.date_end,
+                year_start=self.year_start,
+                year_end=self.year_end,
             )
 
         return row
