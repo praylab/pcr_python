@@ -68,7 +68,7 @@ def build_model(
     # TODO: check datestart, ambil dari model.datestart??
     print('Building SLR ..')
     rate_ar6, days_ar6 = build_slr_curve(scenario=scenario, transect=transect, date_start=model.date_start)
-    model.attach_slr(rate_ar6, days_ar6)
+    model.attach_slr(rate_ar6, days_ar6, scenario=scenario)
 
     print('Building wave ..')
     hs, dir, tp, day, record_years = build_wave_array(source, transect=transect, cds_api_key=cds_api_key, wave_data_path=wave_data_path, data_mapper=data_mapper)

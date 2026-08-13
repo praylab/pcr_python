@@ -49,7 +49,6 @@ class PCRModel:
         self.nr_simulation = nr_simulation
         self.nr_batch = nr_batch
 
-        self.scenario = scenario
         self.wl0 = wl0
         self.ar6_scenario = scenario
 
@@ -101,15 +100,23 @@ class PCRModel:
         self.track_time = [None] * nr_simulation
         self.track_shoreline = [None] * nr_simulation
 
-    def attach_slr(self, rate_ar6, days_ar6):
+    def attach_slr(self, rate_ar6, days_ar6, scenario=None):
         '''
-        Attach an AR6 sea level rate curve loaded by pcr.builder.load_slr_curve().
+        Attach an AR6 sea level rate curve loaded by pcr.builder.build_slr_curve().
         Exposed as a setter (rather than folded into __init__) so calibration workflows
         can swap in a freshly-loaded curve (e.g. after changing scenario) and rerun
         run_simulation() without reconstructing the model.
+
+        :param scenario: AR6 scenario the curve was built for (e.g. 'ssp126', or '0' for
+            no SLR). Pass this whenever you swap in a curve for a different scenario than
+            the model was constructed with — it updates self.ar6_scenario, which is what
+            actually gates vector_simulate_slrAR6 (rate_ar6/days_ar6 alone are not enough:
+            scenario == '0' short-circuits to zero SLR regardless of the attached curve).
         '''
         self.rate_ar6 = rate_ar6
         self.days_ar6 = days_ar6
+        if scenario is not None:
+            self.ar6_scenario = scenario
         return self.rate_ar6, self.days_ar6
 
     def attach_wave_data(self, hs, dir, tp, day, record_years):
