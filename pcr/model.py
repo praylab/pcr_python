@@ -2,9 +2,8 @@
 import time
 
 import numpy as np
-import xarray as xr
 
-from pcr import helper, storm, slr, shoreline, erosion
+from pcr import storm, slr, shoreline, erosion
 
 
 class PCRModel:
@@ -24,10 +23,7 @@ class PCRModel:
         nr_batch: int = 1000,
         # SLR
         scenario: str = 'ssp126',
-        slr_data_path: str = '.data/AR6_slr',
         wl0: float = 0.0,
-        lon_sl: float = 82,
-        lat_sl: float = 7.5,
         # erosion
         doe: float = 2.5,
         ws: float = 0.04,
@@ -40,12 +36,6 @@ class PCRModel:
         ts_hs: float = 95,
         ts_dur: float = 12.0,
         ts_between: float = 48.0,
-        # wave data
-        # TODO: separate the pre-process data with the model -> write in io
-        lon: float = 82,
-        lat: float = 7.5,
-        wave_data_path: str = './data/ERA5/B3_offshore.nc',
-        data_mapper: dict = None,
         # post-process
         statistics_kind: str = 'min',
         # future condition
@@ -60,11 +50,8 @@ class PCRModel:
         self.nr_batch = nr_batch
 
         self.scenario = scenario
-        self.slr_data_path = slr_data_path
         self.wl0 = wl0
         self.ar6_scenario = scenario
-        self.lon_sl = lon_sl
-        self.lat_sl = lat_sl
 
         self.doe = doe
         self.ws = ws
@@ -78,25 +65,23 @@ class PCRModel:
         self.ts_dur = ts_dur
         self.ts_between = ts_between
 
-        self.lon = lon
-        self.lat = lat
-        self.wave_data_path = wave_data_path
-        self.data_mapper = data_mapper or {'hs': 'swh', 'dir': 'mwd', 'tp': 'mwp', 'time': 'time'}
-
         self.statistics_kind = statistics_kind
 
         self.fac_lambda = fac_lambda
         self.rec_rate_end = rec_rate_end
 
-        # populated by the stage methods below
+        # populated via attach_slr()/attach_wave_data() (see pcr.builder for the
+        # I/O that produces these values)
         self.rate_ar6 = None
         self.days_ar6 = None
 
-        self.wave_data = None
         self.hs = None
         self.dir = None
         self.tp = None
         self.day = None
+        self.record_years = None
+
+        self.transect = None
 
         self.detected_storm = None
         self.storm_props = None
@@ -116,38 +101,44 @@ class PCRModel:
         self.track_time = [None] * nr_simulation
         self.track_shoreline = [None] * nr_simulation
 
-    def init_slr(self):
-        '''Import the AR6 sea level rate curve at (lon_sl, lat_sl).'''
-        if self.ar6_scenario != '0':
-            self.rate_ar6, self.days_ar6 = slr.import_ar6_curve(
-                self.ar6_scenario, self.lon_sl, self.lat_sl, date_start=self.date_start, dir=self.slr_data_path
-            )
-        else: 
-            self.rate_ar6, self.days_ar6 = np.zeros(10), np.zeros(10)
+    def attach_slr(self, rate_ar6, days_ar6):
+        '''
+        Attach an AR6 sea level rate curve loaded by pcr.builder.load_slr_curve().
+        Exposed as a setter (rather than folded into __init__) so calibration workflows
+        can swap in a freshly-loaded curve (e.g. after changing scenario) and rerun
+        run_simulation() without reconstructing the model.
+        '''
+        self.rate_ar6 = rate_ar6
+        self.days_ar6 = days_ar6
         return self.rate_ar6, self.days_ar6
 
-    def load_wave_data(self):
-        '''Load wave time series and extract hs, dir, tp, day arrays.'''
-        self.wave_data = xr.open_dataset(self.wave_data_path)
-        self.hs, self.dir, self.tp, self.day = helper.era5_input(self.wave_data, self.data_mapper)
+    def attach_wave_data(self, hs, dir, tp, day, record_years):
+        '''
+        Attach a wave time series loaded by pcr.builder.load_wave_data(), plus the
+        number of years the record spans (used to scale yearly storm counts).
+        '''
+        self.hs = hs
+        self.dir = dir
+        self.tp = tp
+        self.day = day
+        self.record_years = record_years
         return self.hs, self.dir, self.tp, self.day
 
+    def attach_transect(self, transect): 
+        self.transect = transect
+        return self.transect
+
     def detect_storms(self):
-        '''Detect storms from the loaded wave data and fit storm/gap distributions.'''
+        '''Detect storms from the attached wave data and fit storm/gap distributions.'''
         if self.hs is None:
-            raise RuntimeError('call load_wave_data() before detect_storms()')
+            raise RuntimeError('call attach_wave_data() before detect_storms()')
 
         self.detected_storm, _ = storm.detect(
             self.hs, self.dir, self.tp, self.day, self.ts_hs, self.ts_dur, self.ts_between
         )
         self.storm_props = storm.fit_storm(self.detected_storm)
         self.fitted_lambdas = storm.fit_lambda_gap(self.detected_storm)
-
-        time_var = self.data_mapper['time']
-        record_years = (
-            self.wave_data[time_var][-1].dt.year - self.wave_data[time_var][0].dt.year
-        ).values
-        self.yearly_storm = np.ceil(self.detected_storm.shape[0] / record_years)
+        self.yearly_storm = np.ceil(self.detected_storm.shape[0] / self.record_years)
 
         return self.detected_storm, self.storm_props, self.fitted_lambdas
 
@@ -255,7 +246,7 @@ class PCRModel:
         return track_time, track_shoreline_position, storm_count_end
 
     def run_simulation(self):
-        '''Run the batched Monte-Carlo simulation stage (assumes init_slr/load_wave_data/detect_storms already ran).'''
+        '''Run the batched Monte-Carlo simulation stage (assumes attach_slr/attach_wave_data/detect_storms already ran).'''
         self.prepare_simulation()
 
         sim_count = 0
@@ -277,14 +268,12 @@ class PCRModel:
         # return self.shoreline_stats
 
     def run(self):
-        '''Run the full pipeline: SLR curve, wave data, storm detection, then batched simulation.'''
+        '''
+        Run the simulation pipeline: storm detection then batched simulation.
+        Assumes the SLR curve and wave data have already been loaded and attached
+        (see pcr.builder.build_model, or attach_slr()/attach_wave_data() directly).
+        '''
         t0 = time.time()
-
-        print('Calculating Sea Level Rise ...')
-        self.init_slr()
-
-        print('Retrieve wave data ...')
-        self.load_wave_data()
 
         print('Detecting storms ...')
         self.detect_storms()

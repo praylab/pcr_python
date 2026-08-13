@@ -68,30 +68,6 @@ def vector_simulate_slr(day_start: np.array, date_start, scenario, wl0) -> pd.Se
     return (wl0 - slr_values[0] + slr_values)
     
 
-def import_ar6_curve(scenario: str, lon: float, lat: float, quantile:float=0.5, date_start:np.datetime64=None, dir: str = './data/AR6_slr') -> list:
-    '''
-    import IPCC AR6 sea level change rate curve, return to list of rates and years if date_start is not provided else to days since date_start
-    '''
-    filename = f'total_{scenario}_medium_confidence_rates.nc'
-    ds = xr.open_dataset(os.path.join(dir,filename))
-
-    # find the closest point 
-    idx = geo.find_closest(lon, lat, ds.lon, ds.lat, 'locations')
-    point = ds.isel(locations=idx)
-
-    # extract the curve 
-    rates = point.sel(quantiles=quantile).sea_level_change_rate.values / 1000  # in meter / year
-    years = point.years.values
-
-    # convert if applicable
-    if date_start:
-        year_start = (years - 1970).astype('datetime64[Y]')
-        days = (year_start - date_start).astype('timedelta64[D]').astype(int)
-
-        return rates/365.25, days
-    else: 
-        return rates, years
-
 def vector_simulate_slrAR6(day_start: np.array, rate_sl: np.array, day_sl: np.array, wl0: float, scenario: str):
     if scenario == '0': 
         return np.zeros(len(day_start))
