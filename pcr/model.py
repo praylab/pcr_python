@@ -79,6 +79,10 @@ class PCRModel:
         self.tp = None
         self.day = None
         self.record_years = None
+        # the ERA5 grid point the wave data came from; used as the cache key
+        # for rec_rate calibration (see pcr.calibration/pcr.io lookup table)
+        self.lon_wave = None
+        self.lat_wave = None
 
         self.transect = None
 
@@ -119,16 +123,22 @@ class PCRModel:
             self.ar6_scenario = scenario
         return self.rate_ar6, self.days_ar6
 
-    def attach_wave_data(self, hs, dir, tp, day, record_years):
+    def attach_wave_data(self, hs, dir, tp, day, record_years, lon_wave=None, lat_wave=None):
         '''
         Attach a wave time series loaded by pcr.builder.load_wave_data(), plus the
         number of years the record spans (used to scale yearly storm counts).
+
+        :param lon_wave, lat_wave: coordinates of the wave data point (e.g. the
+            nearest ERA5 grid point), when known. Used as the lookup key for
+            cached rec_rate calibration (see pcr.calibration).
         '''
         self.hs = hs
         self.dir = dir
         self.tp = tp
         self.day = day
         self.record_years = record_years
+        self.lon_wave = lon_wave
+        self.lat_wave = lat_wave
         return self.hs, self.dir, self.tp, self.day
 
     def attach_transect(self, transect): 

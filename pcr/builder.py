@@ -21,14 +21,17 @@ def build_slr_curve(scenario: str, transect: float, date_start: np.datetime64):
 
 def build_wave_array(source: str, transect: float = None, cds_api_key: str = None, wave_data_path: str = None, data_mapper: dict = None):
     '''
-    
+    Load a wave time series plus the (lon_wave, lat_wave) point it came from.
+    :return: (hs, dir, tp, day, record_years, lon_wave, lat_wave). lon_wave/lat_wave
+        are None for source='file', since a local file has no implied ERA5 grid point.
     '''
-    # Return to ARCO file in the closest offshore to the transect 
+    # Return to ARCO file in the closest offshore to the transect
     if source == 'ARCO':
         return io.import_era5arco(transect, cds_api_key)
     elif source == 'file':
-        return io.load_wave_data(wave_data_path)
-    else: 
+        hs, dir, tp, day, record_years = io.load_wave_data(wave_data_path, data_mapper)
+        return hs, dir, tp, day, record_years, None, None
+    else:
         raise ValueError('Not valid source. Choose between "ARCO" or "file"')
 
 
@@ -71,7 +74,7 @@ def build_model(
     model.attach_slr(rate_ar6, days_ar6, scenario=scenario)
 
     print('Building wave ..')
-    hs, dir, tp, day, record_years = build_wave_array(source, transect=transect, cds_api_key=cds_api_key, wave_data_path=wave_data_path, data_mapper=data_mapper)
-    model.attach_wave_data(hs, dir, tp, day, record_years)
+    hs, dir, tp, day, record_years, lon_wave, lat_wave = build_wave_array(source, transect=transect, cds_api_key=cds_api_key, wave_data_path=wave_data_path, data_mapper=data_mapper)
+    model.attach_wave_data(hs, dir, tp, day, record_years, lon_wave=lon_wave, lat_wave=lat_wave)
 
     return model
