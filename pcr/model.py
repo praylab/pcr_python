@@ -25,9 +25,6 @@ class PCRModel:
         scenario: str = 'ssp126',
         wl0: float = 0.0,
         # erosion
-        doe: float = 2.5,
-        ws: float = 0.04,
-        d: float = 2 + 1,
         rec_rate: float = 7.4119/365, # calibrated value
         m: float = 0.024,
         c1: float = 1.339,
@@ -234,6 +231,9 @@ class PCRModel:
             hss=synth_hs,
             tps=synth_tp,
             durs=synth_duration,
+            m=self.m,
+            C1=self.c1,
+            C2=self.c2,
         )
 
         # look up each storm's recovery rate for its day in one vectorized indexing
