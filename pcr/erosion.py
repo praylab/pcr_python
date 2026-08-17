@@ -30,21 +30,27 @@ def mendoza(storms_sample: pd.DataFrame) -> list:
 
     return [delV, delX]
 
-def vector_mendoza(hss: np.array, tps: np.array, durs: np.array) -> list:
+def vector_mendoza(
+    hss: np.array,
+    tps: np.array,
+    durs: np.array,
+    m: float = 12/500,
+    C1: float = 2.069, #1.883;
+    C2: float = 0.830, #0.842;
+) -> list:
     '''
     calculate erosion adapting mendoza and jimenez (2006) erosion model
 
+    :param m: average beach profile slope -> from where?
+    :param C1: erosion model calibration coefficient
+    :param C2: erosion model calibration coefficient
     '''
 
-    # constants 
-    Doe = 2.5 
+    # constants
+    Doe = 2.5
     g = 9.81
     ws = 0.04 # 0.03 for 0.2 mm; 0.05 for 0.3 mm; 0.07 for 0.4 mm; 0.09 for 0.5 mm
-    m = 12/500 # average beach profile slope -> from where? 
     d = 6
-
-    C1 = 2.069 #1.883;
-    C2 = 0.830 #0.842; 
 
     D = hss / (ws * tps)
     JA = m * np.abs(Doe-D)**0.5

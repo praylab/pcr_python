@@ -52,9 +52,6 @@ class PCRModel:
         self.wl0 = wl0
         self.ar6_scenario = scenario
 
-        self.doe = doe
-        self.ws = ws
-        self.d = d
         self.rec_rate = rec_rate
         self.m = m
         self.c1 = c1
