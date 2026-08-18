@@ -167,7 +167,7 @@ def import_era5arco(transect, cds_api_key):
     data_mapper = {'hs': 'swh', 'dir': 'mwd', 'tp': 'mwp', 'time': 'time'}
     hs, dir, tp, time = unpack_era5(ds, data_mapper)
 
-    return hs, dir, tp, time, year_record
+    return hs, dir, tp, time, year_record, lon, lat
 
 
 def load_wave_data(wave_data_path: str, data_mapper: dict = None):
