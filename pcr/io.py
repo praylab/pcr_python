@@ -124,13 +124,16 @@ def ar6slr_area(loc:list, scenario:str, buffer: float=2, year_slice=None) -> xr.
     return ds_subset
 
 
-def import_ar6_curve(transect, scenario: str, quantile:float=0.5, date_start:np.datetime64=None) -> list:
+def import_ar6_curve(transect, scenario: str, quantile:float=0.5, date_start:np.datetime64=None, buffer:float=2) -> list:
     '''
     import IPCC AR6 sea level change rate curve, return to list of rates and years if date_start is not provided else to days since date_start
     '''
 
+    # import ds within buffer 
+    ds_slr = ar6slr_area(loc=[transect.lon, transect.lat], scenario=scenario, buffer=buffer)
+
     # find the closest point 
-    _, idx_location = geo.nearest_ar6slr(transect, scenario)
+    _, idx_location = geo.nearest_ar6slr(transect, ds_slr)
     point = ar6slr_point(loc=idx_location, scenario=scenario)
 
     # extract the curve 
@@ -147,13 +150,16 @@ def import_ar6_curve(transect, scenario: str, quantile:float=0.5, date_start:np.
         return rates, years
 
 
-def import_era5arco(transect, cds_api_key):
+def import_era5arco(transect, cds_api_key:str, buffer:float=1):
     '''
     return to 40 years historical wave data from the closest offshore ERA5 ARCO data point
     '''
 
+    # get ERA5 area within buffer area 
+    ds = era5arco_area([transect.lon, transect.lat], cds_api_key, buffer)
+
     # get nearest point 
-    lon, lat = geo.nearest_era5arco(transect, cds_api_key)
+    lon, lat = geo.nearest_era5arco(transect, ds)
 
     # load 40 years data from 1980 - 2019
     ds = era5arco_point(

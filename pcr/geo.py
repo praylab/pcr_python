@@ -6,8 +6,8 @@ import numpy as np
 import duckdb
 import geopandas as gpd
 import shapely
+import xarray as xr
 
-from pcr import io
 
 def find_closest(lon:float, lat:float, data_lon:np.array, data_lat:np.array, dim:str=None) -> int: 
     '''
@@ -69,7 +69,7 @@ def bbox_to_transect(lon_min, lat_min, lon_max, lat_max) -> gpd.GeoSeries:
     return transect.iloc[len(transect) // 2]
 
 
-def nearest_era5arco(transect:gpd.GeoSeries, cds_api_key:str, buffer:float=1) -> list:
+def nearest_era5arco(transect:gpd.GeoSeries, ds: xr.Dataset) -> list:
     '''
     Return to the closest point of ERA5 offshore to the transect 
     :param transect: pandas series of selected GCTR transect, output of bbox_to_transect
@@ -78,8 +78,6 @@ def nearest_era5arco(transect:gpd.GeoSeries, cds_api_key:str, buffer:float=1) ->
 
     :return : list of coordinate [lon, lat] of the nearest offshore ERA5 point
     '''
-    # get ERA5 area within buffer area on single timestamp 
-    ds = io.era5arco_area([transect.lon, transect.lat], cds_api_key, buffer)
 
     # convert to dataframe and remove nans (land points)
     df_era5 = ds.to_dataframe().reset_index().dropna()
@@ -109,13 +107,10 @@ def nearest_era5arco(transect:gpd.GeoSeries, cds_api_key:str, buffer:float=1) ->
     return [gdf_join.iloc[0]['longitude'], gdf_join.iloc[0]['latitude']]
 
 
-def nearest_ar6slr(transect:gpd.GeoSeries, scenario:str, buffer:float=2) -> list: 
+def nearest_ar6slr(transect:gpd.GeoSeries, ds_slr:xr.Dataset) -> list: 
     '''
     return to the closest data point in AR6 IPCC data 
     '''
-
-    # clip area within buffer
-    ds_slr = io.ar6slr_area(loc=[transect.lon, transect.lat], scenario=scenario, buffer=buffer)
 
     # give geographical information and re-project to utm 
     ori_crs = '4326'
