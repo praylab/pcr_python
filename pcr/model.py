@@ -289,6 +289,10 @@ class PCRModel:
                 if sim_count >= self.nr_simulation:
                     break
 
+        # remove the track_shoreline and track_time to free some memory
+        self.track_time = None
+        self.track_shoreline = None
+
         # return self.shoreline_stats
 
     def run(self):
