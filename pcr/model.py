@@ -33,6 +33,7 @@ class PCRModel:
         ts_hs: float = 95,
         ts_dur: float = 12.0,
         ts_between: float = 48.0,
+        ts_hs_type: str = 'percentile', 
         # post-process
         statistics_kind: str = 'min',
         # future condition
@@ -57,6 +58,7 @@ class PCRModel:
         self.ts_hs = ts_hs
         self.ts_dur = ts_dur
         self.ts_between = ts_between
+        self.ts_hs_type = ts_hs_type
 
         self.statistics_kind = statistics_kind
 

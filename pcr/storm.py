@@ -7,7 +7,7 @@ from scipy import stats
 from pcr import helper
 from copulas.bivariate import Clayton
 
-def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:float, ts_dur:float, ts_between:float=0) -> pd.DataFrame:
+def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:float, ts_dur:float, ts_between:float=0, ts_hs_type:str='percentile') -> pd.DataFrame:
     '''
     Detect storms from a time series of wave with Peak Over Threshold approach
     :param hs: np.array, series of significant wave heights in meters
@@ -17,11 +17,17 @@ def detect(hs:np.array, dir:np.array, tp:np.array, time:np.array, ts_hs:float, t
     :param ts_hs: float, threshold percentile of significant wave height to define a storm in percentage (e.g., 95 for 95th percentile)
     :param ts_dur: float, threshold duration (in hours) to define a storm in hours
     :param ts_between: minimum time between two consecutive storm that is assumed to be independent, in hour
+    :param ts_hs_type: str, either 'percentile' (ts_hs is a percentile, e.g. 95 for 95th percentile) or 'value' (ts_hs is the actual Hs threshold in meters)
     :return: dataframe of detected storms with start time, end time, duration, max hs, mean dir, mean tp
     '''
 
     # obtain index where hs exceeds threshold
-    threshold = np.percentile(hs, ts_hs)
+    if ts_hs_type == 'percentile':
+        threshold = np.percentile(hs, ts_hs)
+    elif ts_hs_type == 'value':
+        threshold = ts_hs
+    else:
+        raise ValueError("ts_hs_type must be either 'percentile' or 'value'")
     storm_id = np.where(hs >= threshold, 1, 0)
 
     # initiate storm id to track time 
