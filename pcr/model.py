@@ -172,6 +172,8 @@ class PCRModel:
         self.day_to_rec_rate = np.interp(self.day_to_year, [self.year_start, self.year_end], [self.rec_rate, end_rate])
 
         self.shoreline_stats = np.empty((self.t_years + 1, self.nr_simulation))
+        self.track_time = [None] * self.nr_simulation
+        self.track_shoreline = [None] * self.nr_simulation
 
         return self.shoreline_stats
 
