@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import numpy as np
 import scipy.io 
 import pandas as pd
-import xarray as xr
 
 def datenum_to_datetime_one(o, f, e=366) -> datetime:
     '''
@@ -119,8 +118,10 @@ def interp_nan_array(y:np.array):
     :return y: array_like with NaNs replaced with interpolated value
     '''
 
+    def x(z):
+        return z.nonzero()[0]
+
     nans = np.isnan(y)
-    x = lambda z: z.nonzero()[0]
 
     y[nans] = np.interp(x(nans), x(~nans), y[~nans])
 

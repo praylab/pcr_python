@@ -1,13 +1,8 @@
-import os 
-
 import numpy as np
 import pandas as pd
-import xarray as xr 
 
 from datetime import datetime
 from scipy.integrate import cumulative_trapezoid
-
-from pcr import geo
 
 def curve_ar5(scenario):
     '''

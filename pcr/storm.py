@@ -364,7 +364,7 @@ def fit_lambda(storms:pd.DataFrame, fillna:str=None) -> list:
         lambdas = helper.interp_nan_array(lambdas.values)
     elif fillna == 'zeros': 
         lambdas = lambdas.fillna(0).values
-    elif fillna == None: 
+    elif fillna is None: 
         pass
     # raise error?
     else: 
@@ -415,7 +415,7 @@ def fit_lambda_gap(storms:pd.DataFrame, fillna:str=None) -> list:
         lambdas = helper.interp_nan_array(lambdas.values)
     elif fillna == 'zeros': 
         lambdas = lambdas.fillna(0).values
-    elif fillna == None: 
+    elif fillna is None: 
         pass
     # raise error?
     else: 

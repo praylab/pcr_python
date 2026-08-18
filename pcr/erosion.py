@@ -10,7 +10,7 @@ def mendoza(storms_sample: pd.DataFrame) -> list:
 
     # constants 
     Doe = 2.5 
-    g = 9.81
+    # g = 9.81
     ws = 0.04 # 0.03 for 0.2 mm; 0.05 for 0.3 mm; 0.07 for 0.4 mm; 0.09 for 0.5 mm
     m = 12/500 # average beach profile slope -> from where? 
     d = 6
@@ -48,7 +48,7 @@ def vector_mendoza(
 
     # constants
     Doe = 2.5
-    g = 9.81
+    # g = 9.81
     ws = 0.04 # 0.03 for 0.2 mm; 0.05 for 0.3 mm; 0.07 for 0.4 mm; 0.09 for 0.5 mm
     d = 6
 

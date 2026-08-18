@@ -2,7 +2,6 @@
 # Owns the I/O that PCRModel itself no longer does: PCRModel only ever holds
 # already-loaded arrays (see attach_slr()/attach_wave_data()).
 import numpy as np
-import xarray as xr
 
 from pcr import io, geo
 from pcr.model import PCRModel

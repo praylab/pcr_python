@@ -260,7 +260,7 @@ def run_monte_carlo(fitted_storms: dict, fitted_gap: dict, date_start: datetime,
             
             try:
                 shoreline_stats[:, sim_count] = row.flatten()
-            except: 
+            except ValueError:
                 sim_count -= 1 # if there are any missing year, re-do the simulation
 
             # if sim_count == 0:
