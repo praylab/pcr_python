@@ -268,11 +268,11 @@ class PCRModel:
         self.prepare_simulation()
 
         sim_count = 0
+        next_progress = 10
         while sim_count < self.nr_simulation:
             hss, durs, dirs, tps = self._generate_batch()
             storm_count = 0
 
-            print(f'progress: {sim_count / self.nr_simulation * 100:.2f} %')
             for _ in range(self.nr_batch):
                 self.track_time[sim_count], self.track_shoreline[sim_count], storm_count = self._simulate_one(hss, durs, dirs, tps, storm_count)
 
@@ -280,6 +280,12 @@ class PCRModel:
                 self.shoreline_stats[:, sim_count] = row.flatten()
 
                 sim_count += 1
+
+                progress = sim_count / self.nr_simulation * 100
+                if progress >= next_progress:
+                    print(f'progress: {progress:.0f} %')
+                    next_progress += 10
+
                 if sim_count >= self.nr_simulation:
                     break
 
