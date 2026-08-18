@@ -11,6 +11,12 @@ from pcr import geo, helper
 # repo root, anchored to this file's location so paths resolve regardless of cwd
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# calibration lookup tables (see pcr.calibration); data/ is gitignored, so these
+# persist locally without being committed
+LOOKUP_DIR = REPO_ROOT / 'data' / 'lookup_tables'
+REC_RATE_LOOKUP_PATH = LOOKUP_DIR / 'rec_rate.csv'
+REC_RATE_LOOKUP_COLUMNS = ['lon_wave', 'lat_wave', 'rec_rate', 'objective', 'calibrated_at']
+
 def lazyload_era5arco(cds_api_key:str) -> xr.Dataset:
     '''
     Lazy load ERA5 ARCO from CDS dataset (read more about dataset: https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=analysis_ready_data)
@@ -178,6 +184,61 @@ def load_wave_data(wave_data_path: str, data_mapper: dict = None):
     record_years = (wave_data[time_var][-1].dt.year - wave_data[time_var][0].dt.year).values
 
     return hs, dir, tp, day, record_years
+
+
+def load_rec_rate_lookup(path=REC_RATE_LOOKUP_PATH) -> pd.DataFrame:
+    '''
+    Load the rec_rate calibration lookup table written by save_rec_rate_lookup().
+    Returns an empty table with the expected columns if it hasn't been created yet.
+    '''
+    if not os.path.exists(path):
+        return pd.DataFrame(columns=REC_RATE_LOOKUP_COLUMNS)
+    return pd.read_csv(path)
+
+
+def find_rec_rate(lon_wave: float, lat_wave: float, path=REC_RATE_LOOKUP_PATH, tol: float = 1e-6):
+    '''
+    Look up a previously calibrated rec_rate for the wave point closest to
+    (lon_wave, lat_wave). Returns None if no entry is within `tol` degrees, i.e.
+    nothing has been calibrated for this point yet (see save_rec_rate_lookup()).
+    '''
+    table = load_rec_rate_lookup(path)
+    if table.empty:
+        return None
+
+    dist = np.hypot(table['lon_wave'] - lon_wave, table['lat_wave'] - lat_wave)
+    idx = dist.idxmin()
+    if dist.loc[idx] > tol:
+        return None
+
+    return float(table.loc[idx, 'rec_rate'])
+
+
+def save_rec_rate_lookup(lon_wave: float, lat_wave: float, rec_rate: float, objective: float = None, path=REC_RATE_LOOKUP_PATH, tol: float = 1e-6) -> pd.DataFrame:
+    '''
+    Record a calibrated rec_rate for (lon_wave, lat_wave), upserting: any existing
+    entry within `tol` degrees of this point is replaced rather than duplicated.
+    '''
+    table = load_rec_rate_lookup(path)
+
+    if not table.empty:
+        dist = np.hypot(table['lon_wave'] - lon_wave, table['lat_wave'] - lat_wave)
+        table = table[dist > tol]
+
+    new_row = pd.DataFrame([{
+        'lon_wave': lon_wave,
+        'lat_wave': lat_wave,
+        'rec_rate': rec_rate,
+        'objective': objective,
+        'calibrated_at': pd.Timestamp.now().isoformat(),
+    }])
+    table = new_row if table.empty else pd.concat([table, new_row], ignore_index=True)
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    table.to_csv(path, index=False)
+
+    return table
 
 
 def unpack_era5(ds: xr.Dataset, keys: dict={'hs':'swh', 'dir':'mwd', 'tp':'mwp', 'time':'valid_time'}):
