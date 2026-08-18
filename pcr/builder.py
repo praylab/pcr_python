@@ -3,7 +3,7 @@
 # already-loaded arrays (see attach_slr()/attach_wave_data()).
 import numpy as np
 
-from pcr import io, geo
+from pcr import io, geo, calibration
 from pcr.model import PCRModel
 
 
@@ -40,6 +40,7 @@ def build_transect(bbox):
 
 def build_model(
     # SLR scenario
+    calibrate: bool = False, 
     scenario: str = 'ssp126',
     # BBOX
     bbox: list = None,
@@ -58,22 +59,36 @@ def build_model(
     :param model_kwargs: forwarded to PCRModel(...) (year_start, year_end, wl0,
         erosion/storm params, ...); do not include `scenario`, pass it here instead.
     '''
-    print('Initialize model ..')
+    print('Initialize model ...')
     model = PCRModel(scenario=scenario, **model_kwargs)
 
     # build transect 
-    print('Building transect model ..')
+    print('Building transect ...')
     transect = build_transect(bbox)
     model.attach_transect(transect)
 
-    # build slr curve
-    # TODO: check datestart, ambil dari model.datestart??
-    print('Building SLR ..')
-    rate_ar6, days_ar6 = build_slr_curve(scenario=scenario, transect=transect, date_start=model.date_start)
-    model.attach_slr(rate_ar6, days_ar6, scenario=scenario)
-
-    print('Building wave ..')
+    print('Building wave input ...')
     hs, dir, tp, day, record_years, lon_wave, lat_wave = build_wave_array(source, transect=transect, cds_api_key=cds_api_key, wave_data_path=wave_data_path, data_mapper=data_mapper)
     model.attach_wave_data(hs, dir, tp, day, record_years, lon_wave=lon_wave, lat_wave=lat_wave)
+
+    slr_scenario = model.ar6_scenario
+    nr_simulation = model.nr_simulation
+
+    if calibrate: 
+        # calibrating the model to recovery rate
+        model.ar6_scenario = '0'
+        model.nr_simulation = 1000 # assume that 1000 simulation is enough for calibration 
+
+        print('Calibrating recovery rate ...')
+        model.detect_storms()
+        model.rec_rate = calibration.get_or_calibrate_rec_rate(model)
+
+    # build slr curve
+    print('Building sea level change input ...')
+    rate_ar6, days_ar6 = build_slr_curve(scenario=slr_scenario, transect=transect, date_start=model.date_start)
+    model.attach_slr(rate_ar6, days_ar6, scenario=slr_scenario)
+
+    print('Prepare simulation ... ')
+    model.nr_simulation = nr_simulation
 
     return model
