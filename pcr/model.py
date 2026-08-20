@@ -38,7 +38,9 @@ class PCRModel:
         statistics_kind: str = 'min',
         # future condition
         fac_lambda: np.array = np.array([[2015, 2100], [1, 1]]),
-        rec_rate_end: float = None
+        rec_rate_end: float = None,
+        # memory
+        keep_tracks: bool = False,
     ):
         self.date_start = np.datetime64(f'{year_start}-01-01T00:00:00')
         self.date_end = np.datetime64(f'{year_end}-12-31T23:59:00')
@@ -64,6 +66,12 @@ class PCRModel:
 
         self.fac_lambda = fac_lambda
         self.rec_rate_end = rec_rate_end
+
+        # per-simulation time/shoreline tracks are the main memory cost of a run
+        # (one variable-length array per simulation); needed for calibration
+        # (pcr.calibration) or other per-track diagnostics, but otherwise safe to
+        # discard right after each simulation's annual statistics are computed
+        self.keep_tracks = keep_tracks
 
         # populated via attach_slr()/attach_wave_data() (see pcr.builder for the
         # I/O that produces these values)
@@ -279,6 +287,13 @@ class PCRModel:
                 row = self.compute_statistics(sim_count)
                 self.shoreline_stats[:, sim_count] = row.flatten()
 
+                if not self.keep_tracks:
+                    # free this simulation's tracks now rather than waiting for the
+                    # run to finish, so peak memory stays bounded by nr_batch rather
+                    # than nr_simulation
+                    self.track_time[sim_count] = None
+                    self.track_shoreline[sim_count] = None
+
                 sim_count += 1
 
                 progress = sim_count / self.nr_simulation * 100
@@ -288,10 +303,6 @@ class PCRModel:
 
                 if sim_count >= self.nr_simulation:
                     break
-
-        # remove the track_shoreline and track_time to free some memory
-        self.track_time = None
-        self.track_shoreline = None
 
         # return self.shoreline_stats
 

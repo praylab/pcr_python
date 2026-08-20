@@ -39,12 +39,20 @@ def calibrate_rec_rate(model, bounds=(1/365, 10/365), grid_days=DEFAULT_GRID_DAY
         median_all = np.median(aligned, axis=1)
         return np.sum(np.abs(median_all))
 
-    result = minimize_scalar(
-        evaluate_rec_rate,
-        bounds=bounds,
-        method='bounded',
-        options={'xatol': xatol},
-    )
+    # calibration needs the per-simulation tracks regardless of what the model
+    # was built with; force it on here and restore the caller's setting after,
+    # even if the search below raises
+    keep_tracks = model.keep_tracks
+    model.keep_tracks = True
+    try:
+        result = minimize_scalar(
+            evaluate_rec_rate,
+            bounds=bounds,
+            method='bounded',
+            options={'xatol': xatol},
+        )
+    finally:
+        model.keep_tracks = keep_tracks
 
     model.rec_rate = result.x
     return result
