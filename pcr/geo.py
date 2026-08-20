@@ -130,7 +130,7 @@ def nearest_ar6slr(transect:gpd.GeoSeries, ds_slr:xr.Dataset) -> list:
 
     # extend transect 110 km offshore (~AR6 resolution)
     gdf_transect['geometry'] = gdf_transect['geometry'].apply(
-        lambda geom: extend_line(geom, distance_m=55_000, ends='end')
+        lambda geom: extend_line(geom, distance_m=110_000, ends='end')
     )
 
     # calculate distance between transect and data 
