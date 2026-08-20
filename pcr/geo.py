@@ -136,5 +136,4 @@ def nearest_ar6slr(transect:gpd.GeoSeries, ds_slr:xr.Dataset) -> list:
     # calculate distance between transect and data 
     gdf_join = gpd.sjoin_nearest(gdf_slr, gdf_transect, distance_col='dist_m').sort_values('dist_m')
 
-    #TODO: for SLR maybe return to location key? 
     return [gdf_join.iloc[0]['lon_left'], gdf_join.iloc[0]['lat_left']], gdf_join.iloc[0]['locations']
