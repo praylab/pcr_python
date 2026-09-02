@@ -69,7 +69,7 @@ def bbox_to_transect(lon_min, lat_min, lon_max, lat_max) -> gpd.GeoSeries:
     return transect.iloc[len(transect) // 2]
 
 
-def nearest_era5arco(transect:gpd.GeoSeries, ds: xr.Dataset) -> list:
+def nearest_era5arco(transect:gpd.GeoSeries, ds: xr.Dataset, idx: int = 0) -> list:
     '''
     Return to the closest point of ERA5 offshore to the transect 
     :param transect: pandas series of selected GCTR transect, output of bbox_to_transect
@@ -104,10 +104,10 @@ def nearest_era5arco(transect:gpd.GeoSeries, ds: xr.Dataset) -> list:
     # calculate distance between transect and ERA5 points 
     gdf_join = gpd.sjoin_nearest(gdf_era5, transect_utm, distance_col='dist_m').sort_values('dist_m')
 
-    return [gdf_join.iloc[0]['longitude'], gdf_join.iloc[0]['latitude']]
+    return [gdf_join.iloc[idx]['longitude'], gdf_join.iloc[idx]['latitude']]
 
 
-def nearest_ar6slr(transect:gpd.GeoSeries, ds_slr:xr.Dataset) -> list: 
+def nearest_ar6slr(transect:gpd.GeoSeries, ds_slr:xr.Dataset, idx: int = 0) -> list: 
     '''
     return to the closest data point in AR6 IPCC data 
     '''
@@ -136,4 +136,4 @@ def nearest_ar6slr(transect:gpd.GeoSeries, ds_slr:xr.Dataset) -> list:
     # calculate distance between transect and data 
     gdf_join = gpd.sjoin_nearest(gdf_slr, gdf_transect, distance_col='dist_m').sort_values('dist_m')
 
-    return [gdf_join.iloc[0]['lon_left'], gdf_join.iloc[0]['lat_left']], gdf_join.iloc[0]['locations']
+    return [gdf_join.iloc[idx]['lon_left'], gdf_join.iloc[idx]['lat_left']], gdf_join.iloc[idx]['locations']

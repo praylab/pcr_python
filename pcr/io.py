@@ -150,16 +150,21 @@ def import_ar6_curve(transect, scenario: str, quantile:float=0.5, date_start:np.
         return rates, years
 
 
-def import_era5arco(transect, cds_api_key:str, buffer:float=1):
+def import_era5arco(transect, cds_api_key:str, buffer:float=1, idx:int=0, ds=None):
     '''
     return to 40 years historical wave data from the closest offshore ERA5 ARCO data point
+    :param idx: rank of the offshore point to use (0 = closest, 1 = 2nd closest, ...);
+        see geo.nearest_era5arco. Useful for sensitivity checks on point selection.
+    :param ds: pre-fetched buffer area (output of era5arco_area), to reuse across
+        several idx values without re-hitting ARCO for each one.
     '''
 
-    # get ERA5 area within buffer area 
-    ds = era5arco_area([transect.lon, transect.lat], cds_api_key, buffer)
+    # get ERA5 area within buffer area
+    if ds is None:
+        ds = era5arco_area([transect.lon, transect.lat], cds_api_key, buffer)
 
-    # get nearest point 
-    lon, lat = geo.nearest_era5arco(transect, ds)
+    # get nearest point
+    lon, lat = geo.nearest_era5arco(transect, ds, idx=idx)
 
     # load 40 years data from 1980 - 2019
     ds = era5arco_point(
