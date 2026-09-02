@@ -227,7 +227,7 @@ class PCRModel:
 
         storm_count_end = storm_count + len(synth_start)
 
-        synth_hs, synth_direction, synth_duration, synth_tp, synth_end, synth_gap = storm.slice_synthetic_batch(
+        synth_hs, _, synth_duration, synth_tp, synth_end, synth_gap = storm.slice_synthetic_batch(
             hss, dirs, durs, tps, synth_start, storm_count, storm_count_end
         )
 
@@ -255,6 +255,16 @@ class PCRModel:
             gaps=synth_gap,
             rec_rate=self.day_to_rec_rate[day_idx],
         )
+
+        # calculate rec max based on Aparicio et al., 2026
+        if self.rec_cap: 
+            Hs_mean = self.hs.mean()
+            Ew = Hs_mean ** 2 / 16 * 1025 * 9.81
+            R = 0.0142 * Ew**0.35
+            Tr = 3 / R
+            rec_max = self.rec_rate*Tr
+            
+            synth_recovery = np.clip(synth_recovery, a_min=None, a_max=rec_max)
 
         synth_retreat = shoreline.vector_calculate_slr_retreat(
             slrs=synth_slr,
